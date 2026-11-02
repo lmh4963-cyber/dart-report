@@ -6,6 +6,13 @@
 - 원본 파일은 CRETOP 유료 데이터 포함 → 공개 저장소에 올리지 않음. 양식(구조·토큰·컴포넌트)만 이 문서로 보관
 - 3개 파일의 CSS 변수·섹션 순서·컴포넌트·차트 함수 동일 → 하나의 디자인 시스템
 
+## 0. 구현 (dashkit)
+
+- `dashkit/kit.css` — 아래 토큰·컴포넌트를 정수 px로 옮긴 공통 CSS (라이트·다크, 960px·560px 반응형, 인쇄)
+- `dashkit/kit.js` — `K.combo`(막대+선 단일 축, 호버 띠 툴팁, 끝 라벨, 단조 곡선) · `K.spark` · `K.legend` · `K.seg` · `K.chips` · `K.copyTable` · `K.theme` · `K.store`
+- `dashkit.page(title, body, data, app_js)` → 외부 라이브러리 없는 단일 HTML (Pretendard CDN만 사용)
+- 적용: `dart_report/html.py`(기업 재무·동종 N사 비교), `macro_dash/html.py`(거시지표)
+
 ## 1. 사용자 규칙과의 정합 (우선 적용)
 
 | 항목 | 참고 양식 | 적용 기준 |

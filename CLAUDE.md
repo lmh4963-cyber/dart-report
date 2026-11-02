@@ -1,6 +1,7 @@
 # dart-report 작업 지침
 
 - HTML 대시보드를 새로 만들거나 고칠 때 `docs/DASHBOARD_STYLE.md` 양식을 기준으로 함 (사용자 제공 참고 대시보드 3종에서 정리)
+- 새 대시보드는 `dashkit/`(공통 CSS 토큰·SVG 차트·툴팁·슬라이서·테마·표 복사) 재사용 → `dashkit.page(title, body, data, app_js)`로 한 파일 조립. 예시: `dart_report/html.py`, `macro_dash/html.py`
 - 색은 참고 양식 보라 팔레트 (`--accent:#6c5ce7`, `--s1~s4`) — NAVY 팔레트 사용 안 함 (2026.11.2 사용자 결정)
 - 글자 크기는 정수만 사용 (참고 양식의 소수점 크기는 반올림), 문체는 개조식(~함/음·명사)
 - HTML 글꼴 Pretendard, 엑셀·문서 글꼴 맑은 고딕

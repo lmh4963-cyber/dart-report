@@ -23,7 +23,7 @@ python -m dart_report 제이브이엠 --peers 인바디,뷰웍스            # �
 python -m dart_report 제이브이엠 --macro out/거시지표_데이터_202609.csv --coef usdkrw=2   # macro_dash CSV 연결
 python -m dart_report 제이브이엠 --no-quarter --no-html          # 분기 실적·HTML 생략
 ```
-- **HTML 대시보드**: 엑셀과 같은 이름의 `.html` 자동 생성 (Pretendard) — KPI · 코멘트 · 추이 차트 6종(5개년/10개년 전환) · 요약표 · 분기 · 동종업체 · 원가×거시지표
+- **HTML 대시보드**: 엑셀과 같은 이름의 `.html` 자동 생성 — 참고 양식(`docs/DASHBOARD_STYLE.md`, 보라 팔레트·라이트/다크) · 한눈에 보기 · 슬라이서(표시 기업·5/10개년·억원/백만원) · KPI 레일 · 실적·성장성 6종 · 재무 안정성(전년 대비 칸 색·운전자본 일수) · 분기 · 동종 N사 비교 · 원가×거시 · 요약 · 재무표(표 복사)
 - **분기·반기**: 최신 사업연도 다음 해의 3분기 → 반기 → 1분기 보고서 순으로 자동 조회. 누적·해당분기 vs 전년 동기, 분기말 vs 직전 사업연도말
 - **동종업체**: 최근 사업보고서 1건(3개년)으로 매출·이익률·ROE·부채비율·2개년 CAGR 비교 + 비교군 중앙값
 - **거시지표 연결**: `python -m macro_dash` 로 만든 월별 CSV를 연평균으로 묶어 매출원가율과 나란히 표시. 원가 영향 = 사용자 계수 × 전년 대비 변화 (**추정**, 상관·회귀 아님)
@@ -51,7 +51,7 @@ python -m dart_report 제이브이엠 --no-quarter --no-html          # 분기 �
 `python -m unittest -q tests.test_report tests.test_report_plus` — 제이브이엠·인바디·뷰웍스 실제 공시값 픽스처로 추출·지표·엑셀 검증 5건 + 10개년·반기·동종업체·거시연결·HTML 검증 6건
 
 ## 폴더
-`dart_report/` client(API·캐시) · extract(계정 매핑) · metrics(지표) · quarter(분·반기) · peers(동종업체) · macro(거시 연결) · report·report_extra(엑셀) · html(대시보드) · cli  /  `fixtures/` 오프라인 샘플  /  `cache/` API 응답 캐시(자동)
+`dashkit/` 대시보드 공통 CSS·JS  /  `dart_report/` client(API·캐시) · extract(계정 매핑) · metrics(지표) · quarter(분·반기) · peers(동종업체) · macro(거시 연결) · report·report_extra(엑셀) · html(대시보드) · cli  /  `fixtures/` 오프라인 샘플  /  `cache/` API 응답 캐시(자동)
 
 ---
 
@@ -76,7 +76,7 @@ python -m macro_dash --fixtures fixtures/ecos --end 202609     # 오프라인 �
 ## 결과
 | 파일 | 내용 |
 |---|---|
-| `거시지표_대시보드_YYYYMM.html` | ① 국면 신호등(금리·환율·원자재) ② 지표별 36개월 추이·전월/전년 증감 ③ 민감도(계수 입력 → 월별 원가 영향 추정) ④ 권장 재고 커버리지(룰 편집) ⑤ CSV 다운로드·출처 |
+| `거시지표_대시보드_YYYYMM.html` | 참고 양식 · 국면 신호등 레일 · 슬라이서(지표 그룹·12/24/36개월·이동평균) · 지표별 추이 · 원가 민감도(추정) · 재고 커버리지(추정) · 요약 · 데이터 표(복사·CSV) |
 | `거시지표_대시보드_YYYYMM.xlsx` | 요약 · 데이터 · 민감도(수식) · 재고커버리지(수식) · 출처 — 맑은 고딕, 노란 셀 수정 시 재계산 |
 | `거시지표_데이터_YYYYMM.csv` | 월별 원자료 (실데이터 실행 시 `cache/macro_monthly.csv` 에도 저장) |
 

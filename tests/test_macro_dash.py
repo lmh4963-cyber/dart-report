@@ -12,6 +12,17 @@ from macro_dash.series import SERIES, resolve
 FX = Path(__file__).resolve().parent.parent / "fixtures" / "ecos"
 
 
+def assert_integer_sizes(tc, html: str):
+    """HTML·SVG 글자 크기는 정수만 (CSS px/pt, JS font-size 속성)"""
+    import re
+
+    css = re.findall(r"font-size:\s*([\d.]+)(?:px|pt)", html)
+    svg = re.findall(r'"font-size":\s*([\d.]+)', html)
+    tc.assertTrue(css, "CSS 글자크기 없음")
+    bad = [x for x in css + svg if float(x) != int(float(x))]
+    tc.assertEqual(bad, [], "소수점 글자크기")
+
+
 class Client(unittest.TestCase):
     def setUp(self):
         self.c = EcosClient(api_key=None, cache_dir=tempfile.mkdtemp(), fixtures=FX)
@@ -97,12 +108,11 @@ class EndToEnd(unittest.TestCase):
                    "--extra", str(FX / "extra_sample.csv"), "--coef", "usdkrw=1.5"])
         self.assertEqual(rc, 0)
         html = Path(out, "거시지표_대시보드_202609.html").read_text(encoding="utf-8")
-        for s in ("Pretendard", "추정", "#00338D", "#0091DA", "#ED7D31", "#C00000", "예시 데이터", "출처"):
+        for s in ("Pretendard", "추정", "--accent:#6c5ce7", "--s2:#12a97a", "prefers-color-scheme: dark", "예시 데이터", "출처", "국면 신호등", "권장 재고 커버리지"):
             self.assertIn(s, html)
+        self.assertNotIn("#00338D", html)  # 보라 팔레트로 통일 (NAVY 미사용)
         self.assertEqual(html.lower().count("</script>"), 1)  # 내장 데이터가 스크립트를 끊지 않음
-        import re
-        sizes = re.findall(r"font-size:([\d.]+)pt", html)
-        self.assertTrue(sizes and all(float(x) == int(float(x)) for x in sizes), "HTML 소수점 글자크기")
+        assert_integer_sizes(self, html)
         self.assertTrue(Path(out, "거시지표_데이터_202609.csv").exists())
 
         import openpyxl

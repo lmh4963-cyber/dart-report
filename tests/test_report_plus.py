@@ -98,11 +98,13 @@ class Plus(unittest.TestCase):
                         self.assertEqual(cell.font.name, "맑은 고딕", f"{ws.title}!{cell.coordinate}")
                         self.assertEqual(float(cell.font.sz), int(cell.font.sz), f"소수점 글자크기 {ws.title}!{cell.coordinate}")
         html = Path(out, "제이브이엠_기업분석_2016-2025.html").read_text(encoding="utf-8")
-        for s in ("Pretendard", "#00338D", "#0091DA", "#ED7D31", "#C00000", "추정", "출처", "20260814003335", "인바디"):
+        for s in ("Pretendard", "--accent:#6c5ce7", "추정", "출처", "20260814003335", "인바디", "동종 2사 비교", "재무 안정성", "표 복사"):
             self.assertIn(s, html)
+        self.assertNotIn("#00338D", html)
         self.assertEqual(html.lower().count("</script>"), 1)
-        sizes = re.findall(r"font-size:([\d.]+)pt", html)
-        self.assertTrue(sizes and all(float(x) == int(float(x)) for x in sizes))
+        from tests.test_macro_dash import assert_integer_sizes
+
+        assert_integer_sizes(self, html)
 
     def test_cli_minimal(self):
         out = tempfile.mkdtemp()
