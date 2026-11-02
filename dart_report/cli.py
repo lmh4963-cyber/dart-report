@@ -2,6 +2,8 @@
   python -m dart_report 제이브이엠                 # 회사명 (종목코드 054950, corp_code 도 가능)
   python -m dart_report 제이브이엠 --years 5 --out out/
   python -m dart_report 제이브이엠 --fixtures fixtures/   # 오프라인(테스트) 데이터로 생성
+  python -m dart_report 제이브이엠 --years 10 --peers 인바디,뷰웍스 --macro out/거시지표_데이터_202609.csv
+  → 엑셀 + HTML 대시보드 (분기·반기 실적은 최신 분·반기보고서 자동 조회, --no-quarter 로 끔)
 키: .env 파일에 DART_API_KEY=발급키 (https://opendart.fss.or.kr 에서 무료 발급)
 """
 from __future__ import annotations
@@ -23,8 +25,8 @@ def latest_fiscal_year(today: date | None = None) -> int:
     return t.year - 1 if t.month > 3 or (t.month == 3 and t.day >= 31) else t.year - 2
 
 
-def collect(client: DartClient, corp: dict, years: int, fy: int | None = None, fs_div: str = "CFS") -> tuple[dict, dict, dict]:
-    code = corp["corp_code"]
+def collect_financials(client: DartClient, code: str, years: int, fy: int | None = None, fs_div: str = "CFS") -> tuple[dict, str, list[str]]:
+    """연간 재무 수집 → (table, 사용 기준 CFS/OFS, 접수번호 목록)"""
     last = fy or latest_fiscal_year()
     first = last - years + 1
     filings = []
@@ -46,7 +48,13 @@ def collect(client: DartClient, corp: dict, years: int, fy: int | None = None, f
         y -= 3
     data = merge_years(filings)
     ys = [yy for yy in range(first, last + 1)]
-    table = build_table(data, ys)
+    return build_table(data, ys), used_fs, rcepts
+
+
+def collect(client: DartClient, corp: dict, years: int, fy: int | None = None, fs_div: str = "CFS") -> tuple[dict, dict, dict]:
+    code = corp["corp_code"]
+    last = fy or latest_fiscal_year()
+    table, used_fs, rcepts = collect_financials(client, code, years, last, fs_div)
 
     prof = client.company(code)
     meta = {
@@ -87,7 +95,15 @@ def main(argv=None):
     ap.add_argument("--key", help="OpenDART API 키 (생략 시 .env / 환경변수)")
     ap.add_argument("--fixtures", help="오프라인 응답 폴더 (테스트용)")
     ap.add_argument("--pick", type=int, default=0, help="동명 회사가 여럿일 때 선택 번호")
+    ap.add_argument("--peers", help="동종업체 회사명·종목코드, 쉼표 구분 (예: 인바디,뷰웍스)")
+    ap.add_argument("--macro", help="macro_dash 월별 CSV 경로 (거시지표_데이터_YYYYMM.csv) → 원가 × 거시지표 시트")
+    ap.add_argument("--coef", action="append", help="거시 민감도 계수 초기값 key=억원 (usdkrw·eurkrw·jpykrw·imp_raw)")
+    ap.add_argument("--no-quarter", action="store_true", help="분기·반기 실적 생략")
+    ap.add_argument("--no-html", action="store_true", help="HTML 대시보드 생략 (엑셀만)")
     a = ap.parse_args(argv)
+    if a.years < 2 or a.years > 12:
+        print("--years 는 2~12 (OpenDART 재무 데이터는 2015 사업연도 공시부터)", file=sys.stderr)
+        return 1
 
     client = DartClient(api_key=load_api_key(a.key), fixtures=a.fixtures)
     try:
@@ -109,19 +125,59 @@ def main(argv=None):
         print(f"오류: {e}", file=sys.stderr)
         return 1
 
+    ys = table["summary"]["years"]
+    fs_used = "CFS" if meta["fs_label"] == "연결" else "OFS"
+    if not a.no_quarter:
+        from .quarter import latest_quarter
+
+        extras["quarter"] = _safe(lambda: latest_quarter(client, corp["corp_code"], ys[-1] + 1, fs_used)) or None
+    if a.peers:
+        from .peers import collect_peers, peer_entry
+
+        others, _ = collect_peers(client, a.peers.split(","), ys[-1], a.fs)
+        extras["peers"] = [peer_entry(meta["corp_name"], meta.get("stock_code", ""), meta["fs_label"], table, ys[-1], is_main=True)] + others
+    if a.macro:
+        from .macro import build_link, load_macro_csv
+
+        try:
+            extras["macro"] = build_link(table, load_macro_csv(a.macro), a.macro, _coefs(a.coef))
+        except (OSError, StopIteration) as e:
+            print(f"  ! 거시지표 CSV 읽기 실패: {e}", file=sys.stderr)
+
     cm = comments(table, meta["corp_name"])
     Path(a.out).mkdir(parents=True, exist_ok=True)
-    ys = table["summary"]["years"]
     out = Path(a.out) / f"{meta['corp_name']}_기업분석_{ys[0]}-{ys[-1]}.xlsx"
     build_workbook(meta, table, cm, extras, str(out))
+    html_out = None
+    if not a.no_html:
+        from .html import build_html
+
+        html_out = build_html(meta, table, cm, extras, str(out.with_suffix(".html")), offline=bool(a.fixtures))
     print(f"\n[{meta['corp_name']}] 핵심 요약")
     for c in cm:
         print("  · " + c)
     missing = [str(y) for y in ys if not table["rows"][y].get("revenue")]
     if missing:
         print(f"  ! 매출 데이터 없는 연도: {', '.join(missing)}")
-    print(f"\n완료: {out}")
+    q = extras.get("quarter")
+    if q:
+        rv = q["cum"].get("revenue"), q["cum_prev"].get("revenue")
+        op = q["cum"].get("op"), q["cum_prev"].get("op")
+        if all(v is not None for v in rv + op):
+            print(f"  · {q['year']} {q['label']} 누적: 매출 {rv[0]/1e8:,.0f}억 ({(rv[0]/rv[1]-1)*100:+.1f}%) · 영업이익 {op[0]/1e8:,.0f}억 ({(op[0]/op[1]-1)*100:+.1f}%)" if rv[1] and op[1] else "")
+    print(f"\n완료: {out}" + (f"\n      {html_out}" if html_out else ""))
     return 0
+
+
+def _coefs(items):
+    out = {}
+    for it in items or []:
+        k, _, v = it.partition("=")
+        try:
+            out[k.strip()] = float(v)
+        except ValueError:
+            raise SystemExit(f"--coef 형식 오류: {it} (예: usdkrw=1.5)")
+    return out
 
 
 if __name__ == "__main__":

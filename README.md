@@ -16,7 +16,19 @@ python -m dart_report 제이브이엠 --fixtures fixtures # 오프라인 샘플 
 ```
 동명 회사가 여럿이면 후보 목록이 뜨고 `--pick 번호`로 선택.
 
-## 결과 (엑셀 7시트)
+### 추가 옵션
+```bash
+python -m dart_report 제이브이엠 --years 10                     # 10개년 (2~12, 재무 데이터는 2015 사업연도 공시부터)
+python -m dart_report 제이브이엠 --peers 인바디,뷰웍스            # 동종업체 비교 (회사 선정은 사용자 판단)
+python -m dart_report 제이브이엠 --macro out/거시지표_데이터_202609.csv --coef usdkrw=2   # macro_dash CSV 연결
+python -m dart_report 제이브이엠 --no-quarter --no-html          # 분기 실적·HTML 생략
+```
+- **HTML 대시보드**: 엑셀과 같은 이름의 `.html` 자동 생성 (Pretendard) — KPI · 코멘트 · 추이 차트 6종(5개년/10개년 전환) · 요약표 · 분기 · 동종업체 · 원가×거시지표
+- **분기·반기**: 최신 사업연도 다음 해의 3분기 → 반기 → 1분기 보고서 순으로 자동 조회. 누적·해당분기 vs 전년 동기, 분기말 vs 직전 사업연도말
+- **동종업체**: 최근 사업보고서 1건(3개년)으로 매출·이익률·ROE·부채비율·2개년 CAGR 비교 + 비교군 중앙값
+- **거시지표 연결**: `python -m macro_dash` 로 만든 월별 CSV를 연평균으로 묶어 매출원가율과 나란히 표시. 원가 영향 = 사용자 계수 × 전년 대비 변화 (**추정**, 상관·회귀 아님)
+
+## 결과 (엑셀 7시트 + 옵션 시트)
 | 시트 | 내용 |
 |---|---|
 | 요약 | 기업 개요 · 핵심 지표 5개년 · 매출/영업이익률 차트 · 개조식 핵심 코멘트 |
@@ -25,6 +37,9 @@ python -m dart_report 제이브이엠 --fixtures fixtures # 오프라인 샘플 
 | 현금흐름 | 영업·투자·재무 CF, CAPEX, FCF, 배당성향 |
 | 지분·배당 | 최대주주 현황 · 배당 · 임직원 |
 | 최근 공시 | 최근 1년 공시 목록 (DART 링크) |
+| 분기실적 | 최신 분·반기 누적·해당분기 vs 전년 동기, 재무상태 vs 직전 연말 (자동, 공시 있을 때) |
+| 동종비교 | `--peers` 지정 시 — 핵심 지표 나란히 + 중앙값 |
+| 거시연결 | `--macro` 지정 시 — 원가율 × 환율·수입물가 연평균, 민감도 계수(노란 셀) → 원가 영향 수식 (추정) |
 | 출처 | API·산식 정리 |
 
 ## 산식
@@ -33,10 +48,10 @@ python -m dart_report 제이브이엠 --fixtures fixtures # 오프라인 샘플 
 - 공시값 그대로 사용, 추정·보정 없음
 
 ## 검증
-`python -m unittest -q tests.test_report` — 제이브이엠 실제 공시값 픽스처로 추출·지표·엑셀 검증 5건
+`python -m unittest -q tests.test_report tests.test_report_plus` — 제이브이엠·인바디·뷰웍스 실제 공시값 픽스처로 추출·지표·엑셀 검증 5건 + 10개년·반기·동종업체·거시연결·HTML 검증 6건
 
 ## 폴더
-`dart_report/` client(API·캐시) · extract(계정 매핑) · metrics(지표) · report(엑셀) · cli  /  `fixtures/` 오프라인 샘플  /  `cache/` API 응답 캐시(자동)
+`dart_report/` client(API·캐시) · extract(계정 매핑) · metrics(지표) · quarter(분·반기) · peers(동종업체) · macro(거시 연결) · report·report_extra(엑셀) · html(대시보드) · cli  /  `fixtures/` 오프라인 샘플  /  `cache/` API 응답 캐시(자동)
 
 ---
 

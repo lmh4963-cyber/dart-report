@@ -1,6 +1,8 @@
 """OpenDART API 클라이언트 — 키는 환경변수 DART_API_KEY 또는 .env 파일에서 읽음. 응답은 cache/ 에 저장.
 
-오프라인 모드: --fixtures 폴더에 {api}_{corp_code}_{year}.json 형태로 둔 응답을 그대로 사용 (테스트용).
+오프라인 모드: --fixtures 폴더에 {api}_{corp_code}_{year}[_{fs}][_{보고서코드}].json 형태로 둔 응답을 그대로 사용 (테스트용).
+픽스처가 없는 조회는 "데이터 없음(013)"으로 처리.
+보고서코드: 11011 사업 · 11013 1분기 · 11012 반기 · 11014 3분기
 """
 from __future__ import annotations
 
@@ -53,6 +55,8 @@ class DartClient:
         fx = self._fixture(cache_name)
         if fx is not None:
             return fx
+        if self.fixtures:  # 오프라인 모드: 픽스처 없는 조회 = 데이터 없음(013)
+            return {"status": "013", "list": []}
         cp = self.cache / f"{cache_name}.json"
         if cp.exists():
             return json.loads(cp.read_text(encoding="utf-8"))
@@ -116,11 +120,13 @@ class DartClient:
         return self._get("company", f"company_{corp_code}", corp_code=corp_code)
 
     def financials_all(self, corp_code: str, year: int, fs_div: str = "CFS", reprt_code: str = "11011") -> list[dict]:
-        d = self._get("fnlttSinglAcntAll", f"fnlttSinglAcntAll_{corp_code}_{year}_{fs_div}", corp_code=corp_code, bsns_year=str(year), reprt_code=reprt_code, fs_div=fs_div)
+        sfx = "" if reprt_code == "11011" else f"_{reprt_code}"
+        d = self._get("fnlttSinglAcntAll", f"fnlttSinglAcntAll_{corp_code}_{year}_{fs_div}{sfx}", corp_code=corp_code, bsns_year=str(year), reprt_code=reprt_code, fs_div=fs_div)
         return d.get("list", []) or []
 
     def financials_summary(self, corp_code: str, year: int, reprt_code: str = "11011") -> list[dict]:
-        d = self._get("fnlttSinglAcnt", f"fnlttSinglAcnt_{corp_code}_{year}", corp_code=corp_code, bsns_year=str(year), reprt_code=reprt_code)
+        sfx = "" if reprt_code == "11011" else f"_{reprt_code}"
+        d = self._get("fnlttSinglAcnt", f"fnlttSinglAcnt_{corp_code}_{year}{sfx}", corp_code=corp_code, bsns_year=str(year), reprt_code=reprt_code)
         return d.get("list", []) or []
 
     def dividends(self, corp_code: str, year: int) -> list[dict]:

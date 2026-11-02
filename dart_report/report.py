@@ -152,6 +152,9 @@ def build_workbook(meta: dict, table: dict, comments: list[str], extras: dict, o
     bar.height, bar.width = 8, 18
     ws.add_chart(bar, f"{get_column_letter(3 + len(ys))}4")
     cs.sheet_state = "hidden"
+    for row in cs.iter_rows():  # 숨김 차트 원본도 맑은 고딕
+        for c in row:
+            c.font = F_BODY
 
     # ── 2. 손익 ──
     ws2 = wb.create_sheet("손익")
@@ -273,6 +276,11 @@ def build_workbook(meta: dict, table: dict, comments: list[str], extras: dict, o
     if not extras.get("disclosures"):
         ws6.cell(row=r, column=1, value="데이터 없음").font = F_NOTE
 
+    # ── 분기실적 · 동종비교 · 거시연결 (데이터 있을 때만) ──
+    from .report_extra import add_extra_sheets
+
+    add_extra_sheets(wb, meta, table, extras)
+
     # ── 7. 출처 ──
     ws7 = wb.create_sheet("출처")
     _title(ws7, "데이터 출처 · 산식", "")
@@ -284,6 +292,9 @@ def build_workbook(meta: dict, table: dict, comments: list[str], extras: dict, o
                  ("ROE / ROA", "지배주주순이익 ÷ 평균 자본총계 / 평균 자산총계 (전년 값 없으면 기말)"),
                  ("순차입금", "단기차입금 + 유동성장기차입금 + 장기차입금 + 사채 − 현금및현금성자산 − 단기금융상품"),
                  ("FCF", "영업활동현금흐름 − (유형자산 취득 + 무형자산 취득)"), ("CAGR", "(기말 ÷ 기초)^(1/연수) − 1"),
+                 ("분기·반기", "분·반기보고서(11013 1분기 · 11012 반기 · 11014 3분기) 전체 재무제표 — 누적·해당분기 공시값"),
+                 ("동종업체", "사용자 지정 회사의 사업보고서 주요계정 — 선정 기준은 사용자 판단"),
+                 ("거시지표", "macro_dash 월별 CSV (한국은행 ECOS) 연평균 — 원가 영향은 사용자 계수 기반 추정"),
                  ("기업 개황", "OpenDART 기업개황(company)"), ("지분·배당·임직원", "최대주주 현황(hyslrSttus) · 배당에 관한 사항(alotMatter) · 직원 현황(empSttus)"),
                  ("생성", f"dart-report · {date.today().isoformat()}")]:
         ws7.cell(row=r, column=1, value=k).font = F_BOLD
