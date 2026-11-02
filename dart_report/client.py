@@ -141,6 +141,11 @@ class DartClient:
         d = self._get("empSttus", f"empSttus_{corp_code}_{year}", corp_code=corp_code, bsns_year=str(year), reprt_code="11011")
         return d.get("list", []) or []
 
+    def auditor(self, corp_code: str, year: int) -> list[dict]:
+        """회계감사인의 명칭 및 감사의견 (당기·전기·전전기, 핵심감사사항 포함)"""
+        d = self._get("accnutAdtorNmNdAdtOpinion", f"accnutAdtorNmNdAdtOpinion_{corp_code}_{year}", corp_code=corp_code, bsns_year=str(year), reprt_code="11011")
+        return d.get("list", []) or []
+
     def disclosures(self, corp_code: str, bgn_de: str, end_de: str) -> list[dict]:
         d = self._get("list", f"list_{corp_code}_{bgn_de}_{end_de}", corp_code=corp_code, bgn_de=bgn_de, end_de=end_de, page_count="100")
         return d.get("list", []) or []

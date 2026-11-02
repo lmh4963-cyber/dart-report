@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 from .client import DartClient
-from .extract import MAP, SJ_FOR, pick, to_num
+from .extract import MAP, OUTFLOW, SJ_FOR, pick, to_num
 from .metrics import _div, _sum
 
 # (보고서코드, 라벨, 누적 개월) — 최신순으로 시도
@@ -40,7 +40,7 @@ def extract_quarter(items: list[dict]) -> dict:
             vals = {"bs": _first(it, "thstrm_amount"), "bs_prev": _first(it, "frmtrm_amount")}
         for k, v in vals.items():
             if v is not None:
-                out[k][key] = v
+                out[k][key] = abs(v) if key in OUTFLOW else v
     return out
 
 

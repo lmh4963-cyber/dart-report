@@ -97,6 +97,10 @@ def pick(items: list[dict], key: str) -> dict | None:
     return None
 
 
+# 현금 유출 항목 — 공시마다 부호 표기가 다름(예: FY2019·2022 배당금의 지급이 음수) → 절대값으로 통일
+OUTFLOW = {"capex_ppe", "capex_intangible", "dividends_paid", "interest_paid"}
+
+
 def extract_filing(items: list[dict], bsns_year: int) -> dict[int, dict]:
     """한 사업보고서(3개 기간) 응답 → {연도: {표준키: 값(원)}}"""
     out = {bsns_year: {}, bsns_year - 1: {}, bsns_year - 2: {}}
@@ -107,7 +111,7 @@ def extract_filing(items: list[dict], bsns_year: int) -> dict[int, dict]:
         for col, yr in (("thstrm_amount", bsns_year), ("frmtrm_amount", bsns_year - 1), ("bfefrmtrm_amount", bsns_year - 2)):
             v = to_num(it.get(col))
             if v is not None:
-                out[yr][key] = v
+                out[yr][key] = abs(v) if key in OUTFLOW else v
     return out
 
 

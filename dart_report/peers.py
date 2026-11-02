@@ -11,6 +11,7 @@ PEER_METRICS = [
     ("매출 증가율(전년비)", "rev_growth", "pct"), ("매출 CAGR(2개년)", "rev_cagr2", "pct"),
     ("영업이익률", "opm", "pct"), ("순이익률", "npm", "pct"), ("ROE", "roe", "pct"),
     ("자산총계", "assets", "amt"), ("부채비율", "debt_ratio", "pct"), ("유동비율", "current_ratio", "pct"),
+    ("직원 수(명)", "staff", "cnt"), ("1인당 매출액", "rev_per_head", "amt1"),
 ]
 
 
@@ -21,11 +22,13 @@ def _cagr2(rows: dict, fy: int):
     return (b / a) ** 0.5 - 1
 
 
-def peer_entry(name: str, stock: str, fs_label: str, table: dict, fy: int, is_main: bool = False) -> dict:
+def peer_entry(name: str, stock: str, fs_label: str, table: dict, fy: int, is_main: bool = False, gov: dict | None = None) -> dict:
     rows = table["rows"]
     r = dict(rows.get(fy, {}))
     r["rev_cagr2"] = _cagr2(rows, fy)
-    return {"name": name, "stock_code": stock, "fs_label": fs_label, "fy": fy, "main": is_main,
+    st = (gov or {}).get("staff") or {}
+    r["staff"], r["rev_per_head"] = st.get("total"), st.get("rev_per_head")
+    return {"name": name, "stock_code": stock, "fs_label": fs_label, "fy": fy, "main": is_main, "gov": gov or {},
             "values": {k: r.get(k) for _, k, _ in PEER_METRICS},
             "series": {y: {k: rows[y].get(k) for k in ("revenue", "op", "opm", "roe")} for y in sorted(rows)}}
 
@@ -57,7 +60,17 @@ def collect_peers(client: DartClient, queries: list[str], fy: int, fs_div: str =
             continue
         if not table["rows"].get(fy, {}).get("revenue"):
             warns.append(f"{c.get('corp_name')}: FY{fy} 매출 데이터 없음")
-        out.append(peer_entry(c.get("corp_name", q), c.get("stock_code", ""), "연결" if used == "CFS" else "별도", table, fy))
+        from .governance import audit_rows, staff
+
+        def _try(fn):
+            try:
+                return fn() or []
+            except DartError:
+                return []
+
+        gov = {"audit": audit_rows(_try(lambda: client.auditor(c["corp_code"], fy)), fy),
+               "staff": staff(_try(lambda: client.employees(c["corp_code"], fy)), table["rows"].get(fy, {}).get("revenue"))}
+        out.append(peer_entry(c.get("corp_name", q), c.get("stock_code", ""), "연결" if used == "CFS" else "별도", table, fy, gov=gov))
     for w in warns:
         print(f"  ! 동종업체 {w}", file=sys.stderr)
     return out, warns

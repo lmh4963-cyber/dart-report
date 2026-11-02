@@ -45,6 +45,7 @@ BODY = r"""
 
   <div id="secQ"></div>
   <div id="secP"></div>
+  <div id="secG"></div>
   <div id="secM"></div>
 
   <h2 class="sec">요약<small>공시 수치 기준 사실 정리 · 판단·권유 아님</small></h2>
@@ -96,6 +97,7 @@ $("scope").innerHTML = `<thead><tr><th class="lab">구분</th><th class="lab">�
   noCF.length ? ["현금흐름 공백", `FY${noCF[0]}–FY${noCF[noCF.length - 1]}`, "주요계정 API만 공시 → '-'"] : null,
   D.quarter ? ["분기·반기", `${D.quarter.year}년 ${D.quarter.label}보고서`, `접수 ${D.quarter.rcept_no || "-"}`] : ["분기·반기", "해당 없음", "최신 분·반기 미조회"],
   CO.length > 1 ? ["동종업체", CO.slice(1).map(c => c.name).join(", "), `FY${CO[1].fy_last} 사업보고서 · 사용자 지정`] : null,
+  D.gov ? ["감사 · 인원 · 배당", `FY${D.gov.fy} 사업보고서 정형 섹션`, "감사의견·최대주주·직원·배당"] : null,
   D.macro ? ["거시지표", D.macro.file, "macro_dash · 한국은행 ECOS"] : null,
 ].filter(Boolean).map(r => `<tr><td class="lab">${esc(r[0])}</td><td class="lab" style="font-weight:500">${esc(r[1])}</td><td class="lab" style="font-weight:500;color:var(--ink-3)">${esc(r[2])}</td></tr>`).join("") + "</tbody>";
 
@@ -207,7 +209,7 @@ function renderQ(){
 function renderP(){
   if (CO.length < 2){ $("secP").innerHTML = ""; return; }
   const P = vis(), M = D.peer_metrics, fy = MAIN.fy_last;
-  const fmtM = (m, v) => m[2] === "amt" ? amt(v) : ["debt_ratio", "current_ratio"].includes(m[1]) ? pct(v, 0) : pct(v);
+  const fmtM = (m, v) => m[2] === "amt" ? amt(v) : m[2] === "amt1" ? amt(v, 1) : m[2] === "cnt" ? num(v) : ["debt_ratio", "current_ratio"].includes(m[1]) ? pct(v, 0) : pct(v);
   const lowGood = new Set(["debt_ratio"]);
   $("secP").innerHTML = `<h2 class="sec">동종업체 비교<small>FY${fy} · 사용자 지정 비교군 · 사업보고서 주요계정</small></h2><div class="grid">
     <section class="panel wide"><div class="p-head"><h3 class="p-title">${P.length}사 핵심 지표</h3><span class="p-unit">${uName()} · %</span></div><div class="p-sub">보라 칸 = 분석 대상 · 연두 = 표시 기업 중 최고 · 분홍 = 최저 (부채비율은 반대) · 매출 CAGR(2개년) = FY-2 → FY</div>
@@ -221,6 +223,41 @@ function renderP(){
   const one = (id, k, isP) => K.combo($(id), {cats: names, series: [{name: "", colors: P.map(c => c.color), vals: P.map(c => isP ? c.vals[k] : A(c.vals[k]))}], fmt: isP ? pF : amtF, axisPct: isP, slot: 44,
     barLabels: x => isP ? pct(x) : amt(x * U())});
   one("pRev", "revenue", false); one("pOpm", "opm", true); one("pRoe", "roe", true); one("pDebt", "debt_ratio", true);
+}
+
+/* 지배구조 · 감사 · 인원 */
+function renderG(){
+  const G = D.gov; if (!G){ $("secG").innerHTML = ""; return; }
+  const fy = G.fy, h = G.holders || {}, st = G.staff || {}, dv = G.div || [];
+  const comps = [{name: MAIN.name, color: MAIN.color, gov: G, main: true}].concat(vis().filter(c => !c.main && c.gov).map(c => ({name: c.name, color: c.color, gov: c.gov})));
+  const audRows = comps.flatMap(c => (c.gov.audit || []).map((a, i, arr) => ({c, a, chg: i + 1 < arr.length && arr[i + 1].auditor !== a.auditor})));
+  const staffComps = comps.filter(c => c.gov.staff && c.gov.staff.total);
+  $("secG").innerHTML = `<h2 class="sec">지배구조 · 감사 · 인원<small>FY${fy} 사업보고서 · 감사의견 · 최대주주 · 직원 · 배당</small></h2><div class="grid">
+    <section class="panel"><div class="p-head"><h3 class="p-title">최대주주 및 특수관계인</h3><span class="p-unit">FY${fy}말</span></div>
+      <div class="p-sub">최대주주 <b>${esc(h.largest ? h.largest.name : "확인 불가")}</b> · 보통주 합계 지분율 <b>${h.total_ratio == null ? "-" : num(h.total_ratio, 2) + "%"}</b></div>
+      <div class="tbl-wrap"><table><thead><tr><th class="lab">성명</th><th class="lab">관계</th><th>기말 주식수</th><th>지분율</th></tr></thead><tbody>
+      ${(h.list || []).map(p => `<tr><td class="lab">${esc(p.name)}</td><td class="lab" style="font-weight:500">${esc(p.relate)}</td><td>${num(p.shares)}</td><td>${p.ratio == null ? "-" : num(p.ratio, 2) + "%"}</td></tr>`).join("") || `<tr><td class="lab" colspan="4">확인 불가 (공시 없음)</td></tr>`}
+      </tbody></table></div></section>
+    <section class="panel"><div class="p-head"><h3 class="p-title">인원 · 생산성</h3><span class="p-unit">FY${fy}말</span></div>
+      <div class="p-sub">1인당 매출액 = 연결 매출 ÷ 직원 수(회사 단독 기준) · 기준 불일치 참고</div>
+      <dl class="facts">${[["직원 수", st.total == null ? "확인 불가" : `${num(st.total)}명 (정규 ${num(st.regular)} · 계약 ${num(st.contract)})`], ["평균 근속", st.tenure == null ? "-" : num(st.tenure, 1) + "년 (인원 가중)"],
+        ["1인 평균 급여", st.avg_pay == null ? "-" : num(st.avg_pay / 1e6, 1) + "백만원"], ["1인당 매출", st.rev_per_head == null ? "-" : amt(st.rev_per_head, 1) + uName()], ["사업부문", (st.segments || []).join(", ") || "-"]]
+        .map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>
+      ${staffComps.length > 1 ? `<div id="gHeadL" style="margin-top:12px"></div><div class="chart" id="gHead"></div>` : ""}</section>
+    <section class="panel wide"><div class="p-head"><h3 class="p-title">감사인 · 감사의견 · 핵심감사사항</h3><span class="p-unit">FY${fy - 2} — FY${fy}</span></div>
+      <div class="p-sub">DART 사업보고서 「회계감사인의 명칭 및 감사의견」 · 노란 칸 = 직전 연도 대비 감사인 교체</div>
+      <div class="tbl-wrap"><table><thead><tr><th class="lab">회사</th><th>사업연도</th><th class="lab">감사인</th><th class="lab">감사의견</th><th class="lab">핵심감사사항</th><th class="lab">강조사항</th></tr></thead><tbody>
+      ${audRows.map(({c, a, chg}) => `<tr><td class="lab${c.main ? " me" : ""}">${esc(c.name)}</td><td>FY${a.year}</td><td class="lab${chg ? " hl-key" : ""}" style="font-weight:500">${esc(a.auditor)}${chg ? " · 교체" : ""}</td>
+        <td class="lab ${a.opinion.includes("적정") ? "" : "hl-down"}" style="font-weight:600;color:var(${a.opinion.includes("적정") ? "--good" : "--bad"})">${esc(a.opinion)}</td><td class="lab" style="font-weight:500;white-space:normal">${esc(a.kam || "-")}</td><td class="lab" style="font-weight:500">${esc(a.emphasis || "-")}</td></tr>`).join("") || `<tr><td class="lab" colspan="6">확인 불가 (공시 없음)</td></tr>`}
+      </tbody></table></div></section>
+    <section class="panel wide"><div class="p-head"><h3 class="p-title">배당</h3><span class="p-unit">보통주 · 원 · %</span></div>
+      <div class="p-sub">DART 「배당에 관한 사항」 · 배당성향은 공시값(선언 기준) — 재무표의 현금흐름 기준과 다를 수 있음</div>
+      <div class="grid"><div><div id="gDivL"></div><div class="chart" id="gDiv"></div></div>
+      <div class="tbl-wrap"><table><thead><tr><th class="lab">항목</th>${dv.map(d => `<th>FY${d.year}</th>`).join("")}</tr></thead><tbody>
+      ${[["주당 현금배당금(원)", "dps", 0], ["현금배당금총액(백만원)", "total", 0], ["현금배당성향(%)", "payout", 1], ["현금배당수익률(%)", "yield", 1]].map(([l, k, d]) => `<tr><td class="lab">${l}</td>${dv.map(x => `<td>${num(x[k], d)}</td>`).join("")}</tr>`).join("")}
+      </tbody></table></div></div></section></div>`;
+  draw("gDiv", {cats: dv.map(d => "FY" + d.year), series: [{name: "주당 현금배당금(원)", color: "--s1", vals: dv.map(d => d.dps ?? null)}], fmt: x => num(x) + "원", barLabels: x => num(x), h: 200});
+  if (staffComps.length > 1) draw("gHead", {cats: staffComps.map(c => c.name), series: [{name: `1인당 매출 (${uName()})`, colors: staffComps.map(c => c.color), color: "--s1", vals: staffComps.map(c => A(c.gov.staff.rev_per_head))}], fmt: x => num(x, 1), barLabels: x => num(x, 1), slot: 44, h: 190});
 }
 
 /* 원가 × 거시 */
@@ -268,6 +305,13 @@ function renderReads(){
     const others = vis().filter(c => !c.main), med = k => { const a = others.map(c => c.vals[k]).filter(x => x != null).sort((x, y) => x - y); return a.length ? (a.length % 2 ? a[(a.length - 1) / 2] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2) : null; };
     [["영업이익률", "opm"], ["ROE", "roe"]].forEach(([l, k]) => { const m = med(k), x = MAIN.vals[k]; if (m != null && x != null) (x >= m ? good : warn).push(`${l} ${F(pct(x))} — 비교군 중앙값 ${pct(m)}`); });
   }
+  if (D.gov){
+    const au = D.gov.audit || [];
+    if (au.length) (au.every(a => a.opinion.includes("적정")) ? good : warn).push(`감사의견 ${F(au.map(a => a.opinion).join(" · "))} (FY${au[au.length - 1].year}–FY${au[0].year})`);
+    au.forEach((a, i) => { if (i + 1 < au.length && au[i + 1].auditor !== a.auditor) note.push(`FY${a.year} 감사인 교체: ${au[i + 1].auditor} → ${F(a.auditor)}`); });
+    if (au[0] && au[0].kam) note.push(`FY${au[0].year} 핵심감사사항: ${F(au[0].kam)}`);
+    const hd = D.gov.holders || {}; if (hd.largest) note.push(`최대주주 ${F(hd.largest.name)} · 특수관계인 포함 ${hd.total_ratio == null ? "-" : num(hd.total_ratio, 2) + "%"}`);
+  }
   if (noCF.length) note.push(`FY${noCF[0]}–FY${noCF[noCF.length - 1]} 현금흐름은 요약 공시만 있어 공백`);
   note.push(`재무 기준 ${D.meta.fs_label} · 공시값 그대로`);
   if (D.macro) note.push(`원가 영향은 사용자 계수 기반 ${F("추정")}`);
@@ -304,15 +348,16 @@ $("notes").innerHTML = [
   `OpenDART 사업보고서 전체 재무제표(fnlttSinglAcntAll)·주요계정(fnlttSinglAcnt) — ${D.meta.corp_name} ${D.meta.fs_label}, 접수번호 ${(D.meta.rcept_nos || []).join(", ") || "-"}`,
   D.quarter ? `OpenDART ${D.quarter.year}년 ${D.quarter.label}보고서 (접수번호 ${D.quarter.rcept_no || "-"})` : null,
   CO.length > 1 ? `동종업체 ${CO.slice(1).map(c => c.name).join(", ")} — OpenDART 사업보고서 주요계정, 비교군은 사용자 지정` : null,
+  D.gov ? `OpenDART FY${D.gov.fy} 사업보고서 — 회계감사인의 명칭 및 감사의견(accnutAdtorNmNdAdtOpinion) · 최대주주 현황(hyslrSttus) · 직원 현황(empSttus) · 배당에 관한 사항(alotMatter)` : null,
   D.macro ? `거시지표 ${D.macro.file} — macro_dash 출력(한국은행 ECOS), 원가 영향은 사용자 계수 기반 추정` : null,
   "ROE·ROA = 지배주주순이익 ÷ 평균 자본·자산 · 순차입금 = 차입금 + 사채 − 현금 − 단기금융상품 · FCF = 영업CF − (유형 + 무형자산 취득)",
   "매출채권 회전일수 = 매출채권 ÷ 매출액 × 365 · 재고자산 회전일수 = 재고자산 ÷ 매출원가 × 365 (기말 잔액 기준)",
   `생성 ${D.generated} · dart-report · 공시값 그대로, 기업 판단·투자 권유 아님`,
 ].filter(Boolean).map(t => `<li>${esc(t)}</li>`).join("");
 
-function renderAll(){ renderSlicer(); renderRail(); renderGrow(); renderStab(); renderQ(); renderP(); renderM(); renderReads(); renderTable(); }
+function renderAll(){ renderSlicer(); renderRail(); renderGrow(); renderStab(); renderQ(); renderP(); renderG(); renderM(); renderReads(); renderTable(); }
 renderAll();
-K.onResize(() => { renderGrow(); renderStab(); renderQ(); renderP(); renderM(); });
+K.onResize(() => { renderGrow(); renderStab(); renderQ(); renderP(); renderG(); renderM(); });
 """
 
 
@@ -338,7 +383,7 @@ def build_html(meta: dict, table: dict, comments: list[str], extras: dict, out_p
         pys = sorted(int(y) for y in p["series"])
         companies.append({
             "id": f"p{i + 1}", "name": p["name"], "stock_code": p["stock_code"], "fs_label": p["fs_label"], "main": False,
-            "color": f"--c{(i + 1) % 7 + 1}", "years": pys, "fy_last": p["fy"], "vals": p["values"],
+            "color": f"--c{(i + 1) % 7 + 1}", "years": pys, "fy_last": p["fy"], "vals": p["values"], "gov": p.get("gov") or {},
             "fy": {y: {**p["series"][y], "rev_growth": (p["series"][y]["revenue"] / p["series"][y - 1]["revenue"] - 1)
                        if p["series"].get(y - 1, {}).get("revenue") and p["series"][y].get("revenue") is not None else None} for y in pys},
         })
@@ -347,7 +392,7 @@ def build_html(meta: dict, table: dict, comments: list[str], extras: dict, out_p
     data = {
         "meta": {k: meta.get(k) for k in ("corp_name", "stock_code", "market", "fs_label", "rcept_nos", "ceo_nm", "induty", "est_dt", "acc_mt", "adres", "hm_url")},
         "companies": companies, "comments": comments, "generated": date.today().isoformat(), "offline": offline,
-        "quarter": None, "macro": extras.get("macro") or None, "peer_metrics": PEER_METRICS,
+        "quarter": None, "macro": extras.get("macro") or None, "peer_metrics": PEER_METRICS, "gov": extras.get("gov") or None,
     }
     q = extras.get("quarter")
     if q:

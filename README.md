@@ -23,7 +23,7 @@ python -m dart_report 제이브이엠 --peers 인바디,뷰웍스            # �
 python -m dart_report 제이브이엠 --macro out/거시지표_데이터_202609.csv --coef usdkrw=2   # macro_dash CSV 연결
 python -m dart_report 제이브이엠 --no-quarter --no-html          # 분기 실적·HTML 생략
 ```
-- **HTML 대시보드**: 엑셀과 같은 이름의 `.html` 자동 생성 — 참고 양식(`docs/DASHBOARD_STYLE.md`, 보라 팔레트·라이트/다크) · 한눈에 보기 · 슬라이서(표시 기업·5/10개년·억원/백만원) · KPI 레일 · 실적·성장성 6종 · 재무 안정성(전년 대비 칸 색·운전자본 일수) · 분기 · 동종 N사 비교 · 원가×거시 · 요약 · 재무표(표 복사)
+- **HTML 대시보드**: 엑셀과 같은 이름의 `.html` 자동 생성 — 참고 양식(`docs/DASHBOARD_STYLE.md`, 보라 팔레트·라이트/다크) · 한눈에 보기 · 슬라이서(표시 기업·5/10개년·억원/백만원) · KPI 레일 · 실적·성장성 6종 · 재무 안정성(전년 대비 칸 색·운전자본 일수) · 분기 · 동종 N사 비교 · 지배구조·감사·인원 · 원가×거시 · 요약 · 재무표(표 복사)
 - **분기·반기**: 최신 사업연도 다음 해의 3분기 → 반기 → 1분기 보고서 순으로 자동 조회. 누적·해당분기 vs 전년 동기, 분기말 vs 직전 사업연도말
 - **동종업체**: 최근 사업보고서 1건(3개년)으로 매출·이익률·ROE·부채비율·2개년 CAGR 비교 + 비교군 중앙값
 - **거시지표 연결**: `python -m macro_dash` 로 만든 월별 CSV를 연평균으로 묶어 매출원가율과 나란히 표시. 원가 영향 = 사용자 계수 × 전년 대비 변화 (**추정**, 상관·회귀 아님)
@@ -38,7 +38,8 @@ python -m dart_report 제이브이엠 --no-quarter --no-html          # 분기 �
 | 지분·배당 | 최대주주 현황 · 배당 · 임직원 |
 | 최근 공시 | 최근 1년 공시 목록 (DART 링크) |
 | 분기실적 | 최신 분·반기 누적·해당분기 vs 전년 동기, 재무상태 vs 직전 연말 (자동, 공시 있을 때) |
-| 동종비교 | `--peers` 지정 시 — 핵심 지표 나란히 + 중앙값 |
+| 동종비교 | `--peers` 지정 시 — 핵심 지표 나란히 + 중앙값 (직원 수·1인당 매출 포함) |
+| 감사·인원 | 감사인·감사의견·핵심감사사항(교체 표시, 동종업체 포함) · 최대주주 · 직원·1인당 매출 · 배당 3개년 |
 | 거시연결 | `--macro` 지정 시 — 원가율 × 환율·수입물가 연평균, 민감도 계수(노란 셀) → 원가 영향 수식 (추정) |
 | 출처 | API·산식 정리 |
 
@@ -48,7 +49,7 @@ python -m dart_report 제이브이엠 --no-quarter --no-html          # 분기 �
 - 공시값 그대로 사용, 추정·보정 없음
 
 ## 검증
-`python -m unittest -q tests.test_report tests.test_report_plus` — 제이브이엠·인바디·뷰웍스 실제 공시값 픽스처로 추출·지표·엑셀 검증 5건 + 10개년·반기·동종업체·거시연결·HTML 검증 6건
+`python -m unittest -q tests.test_report tests.test_report_plus` — 제이브이엠·인바디·뷰웍스 실제 공시값 픽스처로 추출·지표·엑셀 검증 5건 + 10개년·반기·동종업체·거시연결·HTML·감사·인원·현금흐름 보강 검증 10건
 
 ## 폴더
 `dashkit/` 대시보드 공통 CSS·JS  /  `dart_report/` client(API·캐시) · extract(계정 매핑) · metrics(지표) · quarter(분·반기) · peers(동종업체) · macro(거시 연결) · report·report_extra(엑셀) · html(대시보드) · cli  /  `fixtures/` 오프라인 샘플  /  `cache/` API 응답 캐시(자동)

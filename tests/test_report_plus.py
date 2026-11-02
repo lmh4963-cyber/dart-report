@@ -120,3 +120,60 @@ class Plus(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Governance(unittest.TestCase):
+    """감사·최대주주·직원·배당 + 전체 재무제표 FY2017~2022 (2026.11.2 DART MCP 실제 공시값)"""
+
+    def setUp(self):
+        from tests.test_report import _ensure_list_fixture
+
+        _ensure_list_fixture()
+        self.c = DartClient(api_key=None, cache_dir=tempfile.mkdtemp(), fixtures=FX)
+
+    def test_cashflow_backfill(self):
+        t, _, rc = collect_financials(self.c, "00361381", 10, 2025)
+        r22, r17 = t["rows"][2022], t["rows"][2017]
+        self.assertEqual(r22["ocf"], 14762962853)
+        self.assertEqual(r22["dividends_paid"], 2303593600)  # 공시 음수 → 절대값
+        self.assertEqual(r22["capex"], 3065536223 + 1638612706)
+        self.assertEqual(r17["cogs"], 61052173670)
+        self.assertAlmostEqual(r22["net_debt"], 30257021050 - (7232634004 + 60700000000))
+        self.assertIsNone(t["rows"][2016].get("ocf"))  # FY2016은 주요계정만
+        self.assertIn("20230316000975", rc)
+
+    def test_governance(self):
+        from dart_report.cli import collect
+
+        meta, table, ex = collect(self.c, self.c.find_corp("제이브이엠")[0], 5, fy=2025)
+        g = ex["gov"]
+        self.assertEqual([(a["year"], a["auditor"]) for a in g["audit"]], [(2025, "삼일회계법인"), (2024, "삼일회계법인"), (2023, "도원회계법인")])
+        self.assertEqual(g["audit"][0]["kam"], "계약부채")
+        self.assertEqual(g["holders"]["largest"]["name"], "한미사이언스(주)")
+        self.assertEqual(g["holders"]["total_ratio"], 39.19)
+        self.assertEqual(g["staff"]["total"], 322)
+        self.assertAlmostEqual(g["staff"]["rev_per_head"], 173129219712 / 322)
+        self.assertEqual([d["dps"] for d in g["div"]], [400, 500, 650])
+
+    def test_tenure_parse(self):
+        from dart_report.governance import _years
+
+        self.assertAlmostEqual(_years("7년 2개월"), 7 + 2 / 12)
+        self.assertEqual(_years("9.8"), 9.8)
+        self.assertIsNone(_years("-"))
+
+    def test_peer_staff_and_sheet(self):
+        out = tempfile.mkdtemp()
+        self.assertEqual(main(["제이브이엠", "--fixtures", str(FX), "--peers", "인바디,뷰웍스", "--out", out]), 0)
+        import openpyxl
+
+        wb = openpyxl.load_workbook(os.path.join(out, "제이브이엠_기업분석_2021-2025.xlsx"))
+        ws = wb["감사·인원"]
+        vals = [c.value for row in ws.iter_rows() for c in row if c.value is not None]
+        self.assertIn("성현회계법인", vals)
+        self.assertIn("교체", vals)
+        pv = [c.value for row in wb["동종비교"].iter_rows() for c in row]
+        self.assertIn(370, pv)  # 인바디 직원 수
+        html = Path(out, "제이브이엠_기업분석_2021-2025.html").read_text(encoding="utf-8")
+        for s in ("지배구조 · 감사 · 인원", "핵심감사사항", "한미사이언스(주)", "재고자산평가"):
+            self.assertIn(s, html)

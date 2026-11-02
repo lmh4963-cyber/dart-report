@@ -69,8 +69,18 @@ def collect(client: DartClient, corp: dict, years: int, fy: int | None = None, f
         "dividends": _safe(lambda: client.dividends(code, last)),
         "employees": _safe(lambda: client.employees(code, last)),
         "disclosures": _safe(lambda: client.disclosures(code, (today - timedelta(days=365)).strftime("%Y%m%d"), today.strftime("%Y%m%d"))),
+        "auditor": _safe(lambda: client.auditor(code, last)),
     }
+    extras["gov"] = governance(extras, table["rows"].get(last, {}).get("revenue"), last)
     return meta, table, extras
+
+
+def governance(extras: dict, revenue, fy: int) -> dict:
+    """감사·최대주주·인원·배당 요약 (공시값 그대로)"""
+    from .governance import audit_rows, dividends, holders, staff
+
+    return {"fy": fy, "audit": audit_rows(extras.get("auditor") or [], fy), "holders": holders(extras.get("holders") or []),
+            "staff": staff(extras.get("employees") or [], revenue), "div": dividends(extras.get("dividends") or [], fy)}
 
 
 def _safe(fn):
@@ -135,7 +145,7 @@ def main(argv=None):
         from .peers import collect_peers, peer_entry
 
         others, _ = collect_peers(client, a.peers.split(","), ys[-1], a.fs)
-        extras["peers"] = [peer_entry(meta["corp_name"], meta.get("stock_code", ""), meta["fs_label"], table, ys[-1], is_main=True)] + others
+        extras["peers"] = [peer_entry(meta["corp_name"], meta.get("stock_code", ""), meta["fs_label"], table, ys[-1], is_main=True, gov=extras.get("gov"))] + others
     if a.macro:
         from .macro import build_link, load_macro_csv
 
