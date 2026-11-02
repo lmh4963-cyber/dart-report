@@ -1,0 +1,19 @@
+{
+ "StatisticItemList": {
+  "list_total_count": 1,
+  "row": [
+   {
+    "STAT_CODE": "901Y009",
+    "STAT_NAME": "4.2.1. 소비자물가지수 (예시)",
+    "GRP_CODE": "Group1",
+    "GRP_NAME": "예시그룹",
+    "ITEM_CODE": "EX00",
+    "ITEM_NAME": "총지수",
+    "CYCLE": "M",
+    "START_TIME": "202101",
+    "END_TIME": "202609",
+    "UNIT_NAME": "2020=100"
+   }
+  ]
+ }
+}

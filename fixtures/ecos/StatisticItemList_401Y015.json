@@ -1,0 +1,55 @@
+{
+ "StatisticItemList": {
+  "list_total_count": 4,
+  "row": [
+   {
+    "STAT_CODE": "401Y015",
+    "STAT_NAME": "4.2.1.1. 수입물가지수(기본분류) (예시)",
+    "GRP_CODE": "Group1",
+    "GRP_NAME": "예시그룹",
+    "ITEM_CODE": "EX00",
+    "ITEM_NAME": "총지수",
+    "CYCLE": "M",
+    "START_TIME": "202101",
+    "END_TIME": "202609",
+    "UNIT_NAME": "2020=100"
+   },
+   {
+    "STAT_CODE": "401Y015",
+    "STAT_NAME": "4.2.1.1. 수입물가지수(기본분류) (예시)",
+    "GRP_CODE": "Group1",
+    "GRP_NAME": "예시그룹",
+    "ITEM_CODE": "EX01",
+    "ITEM_NAME": "원재료",
+    "CYCLE": "M",
+    "START_TIME": "202101",
+    "END_TIME": "202609",
+    "UNIT_NAME": "2020=100"
+   },
+   {
+    "STAT_CODE": "401Y015",
+    "STAT_NAME": "4.2.1.1. 수입물가지수(기본분류) (예시)",
+    "GRP_CODE": "Group2",
+    "GRP_NAME": "예시그룹",
+    "ITEM_CODE": "EXW",
+    "ITEM_NAME": "원화기준",
+    "CYCLE": "M",
+    "START_TIME": "202101",
+    "END_TIME": "202609",
+    "UNIT_NAME": ""
+   },
+   {
+    "STAT_CODE": "401Y015",
+    "STAT_NAME": "4.2.1.1. 수입물가지수(기본분류) (예시)",
+    "GRP_CODE": "Group2",
+    "GRP_NAME": "예시그룹",
+    "ITEM_CODE": "EXD",
+    "ITEM_NAME": "계약통화기준",
+    "CYCLE": "M",
+    "START_TIME": "202101",
+    "END_TIME": "202609",
+    "UNIT_NAME": ""
+   }
+  ]
+ }
+}

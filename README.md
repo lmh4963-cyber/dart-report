@@ -37,3 +37,42 @@ python -m dart_report 제이브이엠 --fixtures fixtures # 오프라인 샘플 
 
 ## 폴더
 `dart_report/` client(API·캐시) · extract(계정 매핑) · metrics(지표) · report(엑셀) · cli  /  `fixtures/` 오프라인 샘플  /  `cache/` API 응답 캐시(자동)
+
+---
+
+# macro_dash — 거시지표 의사결정 대시보드
+
+한국은행 ECOS 거시지표 → **국면 신호등·추이·민감도·재고 커버리지** 대시보드(HTML 한 파일) + 엑셀. 가격 예측 아님, 국면 판정·추정만.
+
+## 준비
+1. https://ecos.bok.or.kr/api 에서 무료 API 키 발급
+2. `.env` 에 `ECOS_API_KEY=발급받은키` 추가
+3. 최초 1회 `python -m macro_dash --check` → 통계표·항목명 해석 결과 확인 (NG 항목은 `macro_dash/series.py` 의 이름 수정)
+
+## 사용법
+```bash
+python -m macro_dash --out out/                               # 최근 36개월
+python -m macro_dash --end 202609 --months 24                  # 기준월·기간 지정
+python -m macro_dash --extra lme.csv                           # 구리·알루미늄·니켈·두바이유 외부 CSV (월,지표,값)
+python -m macro_dash --coef usdkrw=1.5 --coef imp_raw=3        # 민감도 계수 초기값(억원)
+python -m macro_dash --fixtures fixtures/ecos --end 202609     # 오프라인 예시 데이터로 체험
+```
+
+## 결과
+| 파일 | 내용 |
+|---|---|
+| `거시지표_대시보드_YYYYMM.html` | ① 국면 신호등(금리·환율·원자재) ② 지표별 36개월 추이·전월/전년 증감 ③ 민감도(계수 입력 → 월별 원가 영향 추정) ④ 권장 재고 커버리지(룰 편집) ⑤ CSV 다운로드·출처 |
+| `거시지표_대시보드_YYYYMM.xlsx` | 요약 · 데이터 · 민감도(수식) · 재고커버리지(수식) · 출처 — 맑은 고딕, 노란 셀 수정 시 재계산 |
+| `거시지표_데이터_YYYYMM.csv` | 월별 원자료 (실데이터 실행 시 `cache/macro_monthly.csv` 에도 저장) |
+
+## 지표·판정
+- 금리: 기준금리(722Y001) · 국고채 3년 · 회사채 AA- 3년(721Y001)
+- 환율 월평균: 원/달러 · 원/유로 · 원/100엔(731Y004)
+- 물가: 수입물가 원재료(401Y015) · PPI 1차금속·화학·전기전자(404Y014) · CPI(901Y009) / 경기: 제조업 업황실적 BSI(512Y013)
+- 항목코드는 하드코딩 없이 `StatisticItemList` 항목명으로 자동 매칭 → `--check` 로 확인
+- 국면: 3개월 vs 12개월 이동평균 — 금리 ±0.10%p, 환율·지수 ±1% 초과 시 상승/하락
+- 원가 영향(추정) = Σ 계수 × 전년 동월 대비 변화 (환율 10원 / 수입물가 1% 단위)
+- 변동성 = 수입물가(원재료) 최근 12개월 월간 변화율 표준편차 → 룰 테이블(예시 4·6·8주)로 커버리지
+
+## 검증
+`python -m unittest -q tests.test_macro_dash` — 예시 픽스처로 수집·판정·민감도·HTML·엑셀(글꼴·정수 pt·수식) 검증 11건

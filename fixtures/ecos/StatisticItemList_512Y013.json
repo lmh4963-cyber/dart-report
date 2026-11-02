@@ -1,0 +1,55 @@
+{
+ "StatisticItemList": {
+  "list_total_count": 4,
+  "row": [
+   {
+    "STAT_CODE": "512Y013",
+    "STAT_NAME": "7.1.1. 기업경기실사지수(실적) (예시)",
+    "GRP_CODE": "Group1",
+    "GRP_NAME": "예시그룹",
+    "ITEM_CODE": "EXC",
+    "ITEM_NAME": "제조업",
+    "CYCLE": "M",
+    "START_TIME": "202101",
+    "END_TIME": "202609",
+    "UNIT_NAME": ""
+   },
+   {
+    "STAT_CODE": "512Y013",
+    "STAT_NAME": "7.1.1. 기업경기실사지수(실적) (예시)",
+    "GRP_CODE": "Group1",
+    "GRP_NAME": "예시그룹",
+    "ITEM_CODE": "EXN",
+    "ITEM_NAME": "비제조업",
+    "CYCLE": "M",
+    "START_TIME": "202101",
+    "END_TIME": "202609",
+    "UNIT_NAME": ""
+   },
+   {
+    "STAT_CODE": "512Y013",
+    "STAT_NAME": "7.1.1. 기업경기실사지수(실적) (예시)",
+    "GRP_CODE": "Group2",
+    "GRP_NAME": "예시그룹",
+    "ITEM_CODE": "EXAA",
+    "ITEM_NAME": "업황실적BSI",
+    "CYCLE": "M",
+    "START_TIME": "202101",
+    "END_TIME": "202609",
+    "UNIT_NAME": ""
+   },
+   {
+    "STAT_CODE": "512Y013",
+    "STAT_NAME": "7.1.1. 기업경기실사지수(실적) (예시)",
+    "GRP_CODE": "Group2",
+    "GRP_NAME": "예시그룹",
+    "ITEM_CODE": "EXBB",
+    "ITEM_NAME": "매출실적BSI",
+    "CYCLE": "M",
+    "START_TIME": "202101",
+    "END_TIME": "202609",
+    "UNIT_NAME": ""
+   }
+  ]
+ }
+}

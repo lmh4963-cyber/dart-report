@@ -1,0 +1,67 @@
+{
+ "StatisticItemList": {
+  "list_total_count": 5,
+  "row": [
+   {
+    "STAT_CODE": "731Y004",
+    "STAT_NAME": "3.1.2.2. 주요국 통화의 대원화환율 (예시)",
+    "GRP_CODE": "Group1",
+    "GRP_NAME": "예시그룹",
+    "ITEM_CODE": "EX01",
+    "ITEM_NAME": "원/미국달러(매매기준율)",
+    "CYCLE": "M",
+    "START_TIME": "202101",
+    "END_TIME": "202609",
+    "UNIT_NAME": "원"
+   },
+   {
+    "STAT_CODE": "731Y004",
+    "STAT_NAME": "3.1.2.2. 주요국 통화의 대원화환율 (예시)",
+    "GRP_CODE": "Group1",
+    "GRP_NAME": "예시그룹",
+    "ITEM_CODE": "EX02",
+    "ITEM_NAME": "원/일본엔(100엔)",
+    "CYCLE": "M",
+    "START_TIME": "202101",
+    "END_TIME": "202609",
+    "UNIT_NAME": "원"
+   },
+   {
+    "STAT_CODE": "731Y004",
+    "STAT_NAME": "3.1.2.2. 주요국 통화의 대원화환율 (예시)",
+    "GRP_CODE": "Group1",
+    "GRP_NAME": "예시그룹",
+    "ITEM_CODE": "EX03",
+    "ITEM_NAME": "원/유로",
+    "CYCLE": "M",
+    "START_TIME": "202101",
+    "END_TIME": "202609",
+    "UNIT_NAME": "원"
+   },
+   {
+    "STAT_CODE": "731Y004",
+    "STAT_NAME": "3.1.2.2. 주요국 통화의 대원화환율 (예시)",
+    "GRP_CODE": "Group2",
+    "GRP_NAME": "예시그룹",
+    "ITEM_CODE": "EXA",
+    "ITEM_NAME": "평균자료",
+    "CYCLE": "M",
+    "START_TIME": "202101",
+    "END_TIME": "202609",
+    "UNIT_NAME": ""
+   },
+   {
+    "STAT_CODE": "731Y004",
+    "STAT_NAME": "3.1.2.2. 주요국 통화의 대원화환율 (예시)",
+    "GRP_CODE": "Group2",
+    "GRP_NAME": "예시그룹",
+    "ITEM_CODE": "EXB",
+    "ITEM_NAME": "말일자료",
+    "CYCLE": "M",
+    "START_TIME": "202101",
+    "END_TIME": "202609",
+    "UNIT_NAME": ""
+   }
+  ]
+ }
+}

@@ -1,0 +1,43 @@
+{
+ "StatisticItemList": {
+  "list_total_count": 3,
+  "row": [
+   {
+    "STAT_CODE": "721Y001",
+    "STAT_NAME": "1.3.2.2. 시장금리(월,분기,년) (예시)",
+    "GRP_CODE": "Group1",
+    "GRP_NAME": "예시그룹",
+    "ITEM_CODE": "EX01",
+    "ITEM_NAME": "국고채(3년)",
+    "CYCLE": "M",
+    "START_TIME": "202101",
+    "END_TIME": "202609",
+    "UNIT_NAME": "연%"
+   },
+   {
+    "STAT_CODE": "721Y001",
+    "STAT_NAME": "1.3.2.2. 시장금리(월,분기,년) (예시)",
+    "GRP_CODE": "Group1",
+    "GRP_NAME": "예시그룹",
+    "ITEM_CODE": "EX02",
+    "ITEM_NAME": "회사채(3년, AA-)",
+    "CYCLE": "M",
+    "START_TIME": "202101",
+    "END_TIME": "202609",
+    "UNIT_NAME": "연%"
+   },
+   {
+    "STAT_CODE": "721Y001",
+    "STAT_NAME": "1.3.2.2. 시장금리(월,분기,년) (예시)",
+    "GRP_CODE": "Group1",
+    "GRP_NAME": "예시그룹",
+    "ITEM_CODE": "EX03",
+    "ITEM_NAME": "회사채(3년, BBB-)",
+    "CYCLE": "M",
+    "START_TIME": "202101",
+    "END_TIME": "202609",
+    "UNIT_NAME": "연%"
+   }
+  ]
+ }
+}
