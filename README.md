@@ -92,3 +92,25 @@ python -m macro_dash --fixtures fixtures/ecos --end 202609     # 오프라인 �
 
 ## 검증
 `python -m unittest -q tests.test_macro_dash` — 예시 픽스처로 수집·판정·민감도·HTML·엑셀(글꼴·정수 pt·수식) 검증 11건
+
+---
+
+# 원자재 검토 기록 대안방향 구현 (2026.11.5)
+
+「원자재 선물 추적 에이전트 구상 검토 기록」의 대안방향 4개 중 공개 데이터로 가능한 부분 구현. 예측 아닌 귀속·검증·추정 도구.
+
+| 대안방향 | 구현 위치 | 데이터 |
+|---|---|---|
+| ① 마진 귀속 분석 | `margin_bridge/` 품목별 물량·믹스·판가·원자재원가·기타원가·신규/단종 분해 · `dart_report` 영업이익 증감 워터폴(공시 손익 기준) | 품목 손익 CSV(사내, 접근 확인 필요) · DART |
+| ② 민감도 시나리오 | `dart_report` HTML '민감도 시나리오' — 원가 중 노출 비중 × 변동률(또는 환율 목표) → 영업이익 영향(추정) | DART 매출원가 + 사용자 가정 |
+| ③ 지수 추적 대시보드 | `macro_dash` HTML '공급사 인상 요구 검증'(지표 변화 × 원가 비중 vs 요구율) · '원가 전가 계산기' | ECOS · 외부 CSV(LME 등) |
+| ④ 파생상품 손실 이력 재검토 | `reviews/derivatives.py` + `reviews/derivatives_jvm.json` — 제이브이엠 FY2007~2025 파생상품 손익·2008 통화옵션(KIKO) 계약 구조, 연도별 접수번호 | DART 사업보고서 원문 주석 |
+
+```bash
+python -m margin_bridge 품목손익.csv --base 2025-H1 --comp 2026-H1 --out out/   # 열: 기간,품목,수량,매출액,매출원가[,원자재원가]
+python -m margin_bridge --sample --out out/                                     # 예시 템플릿
+python -m reviews.derivatives --out out/                                        # 파생상품 손익 이력 HTML
+```
+- 영업이익 귀속(공시 기준): 매출 효과 = 매출 증감 × 전기 매출총이익률 · 원가율 효과 = −원가율 변화 × 당기 매출 · 판관비 효과 · 기타(경상연구비 등) — 합계 = 영업이익 증감
+- 원가율 효과에는 원자재·환율·믹스가 섞여 있음 → 품목 단위 분해는 margin_bridge (사내 데이터 필요)
+- 검증: `python -m unittest -q tests.test_tools` (7건)

@@ -1,0 +1,251 @@
+{
+ "corp": "제이브이엠",
+ "corp_code": "00361381",
+ "unit": "천원",
+ "collected": "2026-11-05",
+ "method": "OpenDART 사업보고서 원문(감사보고서 주석 '금융수익 및 금융비용'·'파생상품', 2008년은 본문 'II-6. 파생상품 등에 관한 사항') 표 발췌 — MyDart MCP download_document",
+ "years": [
+  {
+   "year": 2007,
+   "eval_gain": 9326,
+   "trade_gain": 307130,
+   "eval_loss": 0,
+   "trade_loss": 167180,
+   "product": "통화옵션",
+   "rcept": "20090331000944",
+   "note": "FY2008 보고서 전기 열"
+  },
+  {
+   "year": 2008,
+   "eval_gain": 0,
+   "trade_gain": 268350,
+   "eval_loss": 102016799,
+   "trade_loss": 21308313,
+   "product": "통화옵션 (KIKO·Target Forward)",
+   "rcept": "20090331000944",
+   "note": "순손실 78,809백만원 · 계속기업 불확실성 주석 · 2008.09.29 이사회 '통화옵션 잔여계약 조기종결' 가결"
+  },
+  {
+   "year": 2009,
+   "eval_gain": 15136022,
+   "trade_gain": 5673600,
+   "eval_loss": 0,
+   "trade_loss": 7276228,
+   "product": "미조회",
+   "rcept": "20110331000840",
+   "note": "FY2010 보고서 전기 열 · 2008년말 잔존 통화옵션 계약 만기 2010.03~2011.03 (FY2008 계약표)"
+  },
+  {
+   "year": 2010,
+   "eval_gain": 690322,
+   "trade_gain": 3399539,
+   "eval_loss": 0,
+   "trade_loss": 1218505,
+   "product": "미조회",
+   "rcept": "20110331000840",
+   "note": ""
+  },
+  {
+   "year": 2011,
+   "eval_gain": null,
+   "trade_gain": null,
+   "eval_loss": 0,
+   "trade_loss": 0,
+   "product": "-",
+   "rcept": "20130401001403",
+   "note": "FY2012 보고서에 파생상품 손실 기재 없음 (이익 항목 미조회)"
+  },
+  {
+   "year": 2012,
+   "eval_gain": null,
+   "trade_gain": null,
+   "eval_loss": 0,
+   "trade_loss": 0,
+   "product": "-",
+   "rcept": "20130401001403",
+   "note": "파생상품 손실 기재 없음 (이익 항목 미조회)"
+  },
+  {
+   "year": 2013,
+   "eval_gain": 0,
+   "trade_gain": null,
+   "eval_loss": 0,
+   "trade_loss": 0,
+   "product": "-",
+   "rcept": "20150331001284",
+   "note": "FY2014 보고서 전기 열 '-'"
+  },
+  {
+   "year": 2014,
+   "eval_gain": 282,
+   "trade_gain": null,
+   "eval_loss": 0,
+   "trade_loss": 40753,
+   "product": "미기재",
+   "rcept": "20150331001284",
+   "note": "거래이익 행 확인 못 함"
+  },
+  {
+   "year": 2015,
+   "eval_gain": 76034,
+   "trade_gain": 367685,
+   "eval_loss": 62427,
+   "trade_loss": 116805,
+   "product": "통화선도",
+   "rcept": "20170331003063",
+   "note": "FY2016 보고서 전기 열"
+  },
+  {
+   "year": 2016,
+   "eval_gain": 47276,
+   "trade_gain": 206016,
+   "eval_loss": 0,
+   "trade_loss": 60453,
+   "product": "통화선도",
+   "rcept": "20170331003063",
+   "note": ""
+  },
+  {
+   "year": 2017,
+   "eval_gain": 108420,
+   "trade_gain": 216103,
+   "eval_loss": 110684,
+   "trade_loss": 6600,
+   "product": "통화선도",
+   "rcept": "20190401002868",
+   "note": "FY2018 보고서 전기 열"
+  },
+  {
+   "year": 2018,
+   "eval_gain": 27579,
+   "trade_gain": 504541,
+   "eval_loss": 167303,
+   "trade_loss": 44482,
+   "product": "통화선도",
+   "rcept": "20190401002868",
+   "note": ""
+  },
+  {
+   "year": 2019,
+   "eval_gain": 0,
+   "trade_gain": 126465,
+   "eval_loss": 48248,
+   "trade_loss": 141990,
+   "product": "통화선도 (외화채권 환율회피 목적)",
+   "rcept": "20200330002527",
+   "note": "당기손익-공정가치 측정 금융부채로 분류"
+  },
+  {
+   "year": 2020,
+   "eval_gain": 0,
+   "trade_gain": 37,
+   "eval_loss": 0,
+   "trade_loss": 120702,
+   "product": "통화선도",
+   "rcept": "20210317000667",
+   "note": ""
+  },
+  {
+   "year": 2021,
+   "eval_gain": 0,
+   "trade_gain": 0,
+   "eval_loss": 0,
+   "trade_loss": 0,
+   "product": "-",
+   "rcept": "20230316000975",
+   "note": "FY2022 보고서 감사보고서에 파생상품 손익 기재 없음"
+  },
+  {
+   "year": 2022,
+   "eval_gain": 0,
+   "trade_gain": 0,
+   "eval_loss": 0,
+   "trade_loss": 0,
+   "product": "-",
+   "rcept": "20230316000975",
+   "note": ""
+  },
+  {
+   "year": 2025,
+   "eval_gain": 0,
+   "trade_gain": 0,
+   "eval_loss": 0,
+   "trade_loss": 0,
+   "product": "-",
+   "rcept": "20260323001116",
+   "note": "FY2025 보고서: 회계정책 문구만 존재, 계약·손익 기재 없음 (FY2023·2024 미조회)"
+  }
+ ],
+ "kiko2008": {
+  "rcept": "20090331000944",
+  "fx_at_ye": 1257.5,
+  "contracts": [
+   {
+    "bank": "한국외환은행",
+    "start": "2007.09 (07.08.17)",
+    "maturity": "2010.08",
+    "strike": "958.0",
+    "base": "USD1,500,000/월",
+    "upper": "USD3,000,000/월 (970원 이상 거래 시)",
+    "knockout": "910원 이하 거래 시 해당월 소멸",
+    "type": "Window Barrier Target Forward KIKO",
+    "loss": -18160276,
+    "rem_base_usd_m": 28.5,
+    "rem_upper_usd_m": 57.0
+   },
+   {
+    "bank": "한국외환은행",
+    "start": "2008.02 (08.01.18)",
+    "maturity": "2011.01",
+    "strike": "988.0 / 949.0",
+    "base": "USD2,000,000/월",
+    "upper": "USD4,000,000/월 (13~36개월차, 949원 초과 시)",
+    "knockout": "930원 이하 하락 시 잔여 소멸",
+    "type": "Profit Taking Forward + Barrier Target Forward",
+    "loss": -29173394,
+    "rem_base_usd_m": 48.0,
+    "rem_upper_usd_m": 96.0
+   },
+   {
+    "bank": "한국외환은행",
+    "start": "2008.04 (08.03.24)",
+    "maturity": "2010.03",
+    "strike": "1,010",
+    "base": "USD1,000,000/월",
+    "upper": "USD2,000,000/월 (1,070원 이상 거래 시)",
+    "knockout": "910원 이하 거래 시 해당월 소멸",
+    "type": "Window Barrier Target Forward KIKO",
+    "loss": -7625256,
+    "rem_base_usd_m": 14.0,
+    "rem_upper_usd_m": 28.0
+   },
+   {
+    "bank": "CS제일은행",
+    "start": "2008.02 (08.01.17)",
+    "maturity": "2011.01",
+    "strike": "1,005.0 / 930.0",
+    "base": "USD1,600,000/월",
+    "upper": "USD3,200,000/월 (13~36개월차, 930원 이상 시)",
+    "knockout": "925원 이하 하락 시 잔여 소멸",
+    "type": "3Y USD/KRW Structured FX Option",
+    "loss": -24412664,
+    "rem_base_usd_m": 0.0,
+    "rem_upper_usd_m": 76.8
+   },
+   {
+    "bank": "한국씨티은행",
+    "start": "08.04.10 (08.03.06)",
+    "maturity": "11.03.10",
+    "strike": "975.0",
+    "base": "USD1,500,000/월",
+    "upper": "USD3,000,000/월 (975원 이상 시)",
+    "knockout": "899원 이하 하락 시 잔여 소멸",
+    "type": "Anytime Knock-Out Target Forward",
+    "loss": -22645209,
+    "rem_base_usd_m": 39.0,
+    "rem_upper_usd_m": 78.0
+   }
+  ],
+  "rem_note": "공시 계약잔액 열: 기본 구간 ⅰ)과 상단 돌파 시 ⅱ) 잔액 (CS제일은행은 13~36개월차 930원 이상 시 USD76.8M만 기재)"
+ }
+}

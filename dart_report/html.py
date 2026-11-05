@@ -8,6 +8,7 @@ from datetime import date
 from dashkit import page
 
 from .peers import PEER_METRICS
+from .bridge import annual_bridges, quarter_bridge
 from .quarter import bs_rows, quarter_rows
 
 KEYS = ["revenue", "cogs", "gross", "sga", "op", "ni", "ni_owner", "assets", "liabilities", "equity", "cash_like", "borrowings", "net_debt",
@@ -43,6 +44,7 @@ BODY = r"""
   <h2 class="sec">재무 안정성<small>부채 · 유동성 · 차입 · 현금흐름 · 운전자본</small></h2>
   <div class="grid" id="gStab"></div>
 
+  <div id="secB"></div>
   <div id="secQ"></div>
   <div id="secP"></div>
   <div id="secG"></div>
@@ -185,6 +187,56 @@ function renderStab(){
   draw("cCf", {cats: c, series: [{name: "영업CF", color: "--s1", vals: v("ocf")}, {name: "CAPEX", color: "--s4", vals: v("capex")}, {name: "FCF", color: "--s2", type: "line", vals: v("fcf")}], fmt: amtF});
   draw("cWc", {cats: c, series: [{name: "매출채권 회전일수", color: "--s3", vals: vr("dso")}, {name: "재고자산 회전일수", color: "--s1", vals: vr("invdays")}], fmt: x => num(x, 0) + "일", h: 220});
   draw("cStr", {cats: c, series: [{name: "자산총계", color: "--s1", vals: v("assets")}, {name: "부채총계", color: "--s4", vals: v("liabilities")}, {name: "자본총계", color: "--s2", vals: v("equity")}], fmt: amtF, h: 220});
+}
+
+/* 영업이익 귀속 · 민감도 시나리오 */
+let brSel = null;
+function renderB(){
+  const all = (D.bridges || []).filter(b => b.year > Y()[0]).concat(D.qbridge ? [D.qbridge] : []);
+  if (!all.length){ $("secB").innerHTML = ""; return; }
+  if (!all.some(b => b.label === brSel)) brSel = all[all.length - (D.qbridge ? 2 : 1)].label || all[all.length - 1].label;
+  const cur = all.find(b => b.label === brSel);
+  const lastFY = MAIN.fy_last, base = R(MAIN, lastFY), macroUsd = D.macro ? ((D.macro.years.find(e => e.year === lastFY) || {}).macro || {}).usdkrw : null;
+  $("secB").innerHTML = `<h2 class="sec">영업이익 귀속 · 민감도 시나리오<small>기발생 변동 설명 + 사용자 가정 기반 영향 추정</small></h2>
+    <p class="seclead">귀속 = 공시 손익 항등식 분해 (예측 아님, 합계 = 영업이익 증감) · <b>원가율 효과</b>에는 원자재·환율·제품 믹스가 함께 섞여 있음 → 품목별 분해는 내부 품목 손익 필요 (margin_bridge)</p>
+    <div class="grid">
+    <section class="panel wide"><div class="p-head"><h3 class="p-title">영업이익 증감 워터폴</h3><div class="seg xs" id="brSeg"></div><span class="p-unit">${uName()}</span></div>
+      <div class="p-sub">매출 효과 = 매출 증감 × 전기 매출총이익률 · 원가율 효과 = −원가율 변화 × 당기 매출 · 판관비 효과 = −판관비 증감 · 기타 = 경상연구비 등 나머지 영업손익</div>
+      <div class="chart" id="brC"></div></section>
+    <section class="panel wide"><div class="p-head"><h3 class="p-title">기간별 귀속 표</h3><span class="p-unit">${uName()}</span></div><div class="p-sub">연간 + 최신 분·반기 누적 · 원가율은 매출원가 ÷ 매출액</div>
+      <div class="tbl-wrap"><table><thead><tr><th class="lab">기간</th><th>기초 영업이익</th><th>매출 효과</th><th>원가율 효과</th><th>판관비 효과</th><th>기타</th><th>기말 영업이익</th><th>원가율 변화</th></tr></thead><tbody>
+      ${all.map(b => `<tr class="${b.label === brSel ? "tot" : ""}"><td class="lab">${b.label}</td><td>${amt(b.op0, 1)}</td>${["rev", "cost", "sga", "other"].map(k => `<td><span class="delta ${dir(b[k] / 1e10)}">${(b[k] > 0 ? "+" : "") + amt(b[k], 1)}</span></td>`).join("")}<td><b>${amt(b.op1, 1)}</b></td><td>${pct(b.cogs_ratio0)} → ${pct(b.cogs_ratio1)}</td></tr>`).join("")}
+      </tbody></table></div></section>
+    <section class="panel wide"><div class="p-head"><h3 class="p-title">민감도 시나리오<span class="est">추정</span></h3><div class="sright"><button class="tbtn" id="scAdd" type="button">동인 추가</button></div></div>
+      <div class="p-sub">기준 FY${lastFY} 매출원가 <b>${amt(base.cogs, 1)}${uName()}</b> · 영업이익 <b>${amt(base.op, 1)}${uName()}</b> · 영향 = 매출원가 × 원가 중 노출 비중 × 변동률 (판가 전가·물량 변화 미반영)
+        ${macroUsd && macroUsd.avg ? ` · 환율 방식 기준값 = FY${lastFY} 원/달러 연평균 <b>${num(macroUsd.avg, 1)}</b>원 (${esc(D.macro.file)})` : " · 환율 방식은 거시지표(--macro) 연결 시 사용"}</div>
+      <div class="tbl-wrap"><table id="scT"></table></div>
+      <div class="rail" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-top:14px" id="scR"></div></section></div>`;
+  K.seg($("brSeg"), all.map(b => [b.label, b.label.replace(" 누적", "")]), brSel, v => { brSel = v; renderB(); });
+  K.waterfall($("brC"), {steps: [{name: "기초 영업이익", value: A(cur.op0), total: true}, {name: "매출 효과", value: A(cur.rev)}, {name: "원가율 효과", value: A(cur.cost), note: `원가율 ${pct(cur.cogs_ratio0)} → ${pct(cur.cogs_ratio1)}`},
+    {name: "판관비 효과", value: A(cur.sga)}, {name: "기타 영업손익", value: A(cur.other)}, {name: "기말 영업이익", value: A(cur.op1), total: true}], fmt: x => num(x, 1), h: 280});
+  /* 시나리오 */
+  const defs = [{name: "원자재 A (예: 구리)", share: 0, mode: "pct", value: 10}, {name: "수입 결제분 (원/달러)", share: 0, mode: "fx", value: 1450}];
+  let sc = K.store.get("dr_sc_" + MAIN.id, null) || defs;
+  const draw = () => {
+    let tot = 0;
+    $("scT").innerHTML = `<thead><tr><th class="lab">동인</th><th>원가 중 노출 비중(%)</th><th>방식</th><th>변동 입력</th><th>변동률</th><th>영업이익 영향</th><th></th></tr></thead><tbody>` + sc.map((d, k) => {
+      const usd = macroUsd && macroUsd.avg, chg = d.mode === "fx" ? (usd ? d.value / usd - 1 : null) : d.value / 100;
+      const imp = chg == null || base.cogs == null ? null : -base.cogs * (d.share / 100) * chg; if (imp != null) tot += imp;
+      return `<tr data-k="${k}"><td class="lab"><input type="text" data-f="name" value="${esc(d.name)}" class="tsel" style="width:180px"></td><td><input type="number" step="1" data-f="share" value="${d.share}"></td>
+        <td><select data-f="mode" class="tsel"><option value="pct" ${d.mode === "pct" ? "selected" : ""}>변동률(%)</option><option value="fx" ${d.mode === "fx" ? "selected" : ""}>환율 목표(원)</option></select></td>
+        <td><input type="number" step="${d.mode === "fx" ? 10 : 1}" data-f="value" value="${d.value}"></td><td>${spct(chg)}</td><td><span class="delta ${dir(imp == null ? null : imp / 1e10)}">${imp == null ? "-" : (imp > 0 ? "+" : "") + amt(imp, 1)}</span></td>
+        <td><button class="tbtn" data-del="${k}" type="button" style="padding:4px 10px">삭제</button></td></tr>`; }).join("") + "</tbody>";
+    const op2 = base.op == null ? null : base.op + tot;
+    $("scR").innerHTML = [["영업이익 영향 합계", (tot > 0 ? "+" : "") + amt(tot, 1), uName()], ["시나리오 영업이익", amt(op2, 1), uName()], ["시나리오 영업이익률", base.revenue && op2 != null ? num(op2 / base.revenue * 100, 1) : "-", `% (기준 ${pct(base.opm)})`]]
+      .map(([l, v, u]) => `<div class="cell"><div class="k-label">${l}<span class="est">추정</span></div><div class="k-val">${v}<span class="k-unit">${u}</span></div></div>`).join("");
+    const save = () => K.store.set("dr_sc_" + MAIN.id, sc);
+    $("scT").querySelectorAll("tbody tr").forEach(tr => { const k = +tr.dataset.k; tr.querySelectorAll("[data-f]").forEach(el => el.onchange = () => {
+      const f = el.dataset.f; sc[k][f] = ["share", "value"].includes(f) ? parseFloat(el.value) || 0 : el.value; if (f === "mode") sc[k].value = el.value === "fx" ? 1450 : 10; save(); draw(); }); });
+    $("scT").querySelectorAll("[data-del]").forEach(b => b.onclick = () => { sc.splice(+b.dataset.del, 1); if (!sc.length) sc = defs.map(x => ({...x})); save(); draw(); });
+  };
+  $("scAdd").onclick = () => { sc.push({name: `동인 ${sc.length + 1}`, share: 0, mode: "pct", value: 10}); K.store.set("dr_sc_" + MAIN.id, sc); draw(); };
+  draw();
 }
 
 /* 분기 */
@@ -355,9 +407,9 @@ $("notes").innerHTML = [
   `생성 ${D.generated} · dart-report · 공시값 그대로, 기업 판단·투자 권유 아님`,
 ].filter(Boolean).map(t => `<li>${esc(t)}</li>`).join("");
 
-function renderAll(){ renderSlicer(); renderRail(); renderGrow(); renderStab(); renderQ(); renderP(); renderG(); renderM(); renderReads(); renderTable(); }
+function renderAll(){ renderSlicer(); renderRail(); renderGrow(); renderStab(); renderB(); renderQ(); renderP(); renderG(); renderM(); renderReads(); renderTable(); }
 renderAll();
-K.onResize(() => { renderGrow(); renderStab(); renderQ(); renderP(); renderG(); renderM(); });
+K.onResize(() => { renderGrow(); renderStab(); renderB(); renderQ(); renderP(); renderG(); renderM(); });
 """
 
 
@@ -393,6 +445,7 @@ def build_html(meta: dict, table: dict, comments: list[str], extras: dict, out_p
         "meta": {k: meta.get(k) for k in ("corp_name", "stock_code", "market", "fs_label", "rcept_nos", "ceo_nm", "induty", "est_dt", "acc_mt", "adres", "hm_url")},
         "companies": companies, "comments": comments, "generated": date.today().isoformat(), "offline": offline,
         "quarter": None, "macro": extras.get("macro") or None, "peer_metrics": PEER_METRICS, "gov": extras.get("gov") or None,
+        "bridges": annual_bridges(table), "qbridge": quarter_bridge(extras.get("quarter")),
     }
     q = extras.get("quarter")
     if q:
@@ -401,5 +454,5 @@ def build_html(meta: dict, table: dict, comments: list[str], extras: dict, out_p
         data["quarter"]["bs"] = bs_rows(q)
     title = f"{meta.get('corp_name', '')} 재무분석" + (f" · 동종 {len(peers)}사 비교" if peers else "")
     with open(out_path, "w", encoding="utf-8") as fp:
-        fp.write(page(title, BODY, data, APP))
+        fp.write(page(title, BODY, data, APP, ".tsel{font-size:13px;padding:5px 8px;border:1px solid var(--axis);border-radius:8px;background:var(--surface-2);color:var(--ink)}"))
     return out_path

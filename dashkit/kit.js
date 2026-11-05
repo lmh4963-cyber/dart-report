@@ -156,6 +156,32 @@ const K = (() => {
     });
   }
 
+  /* 워터폴 — steps: [{name, value, total:bool}] · 시작·끝(total)은 막대 전체, 중간은 증감 */
+  function waterfall(box, o){
+    const st = o.steps, w = Math.max(280, box.clientWidth || 600), h = o.h || 260, M = {t: 22, r: 12, b: 44, l: o.l || 52};
+    box.innerHTML = "";
+    const svg = el("svg", {viewBox: `0 0 ${w} ${h}`, width: w, height: h, role: "img"}); svg.style.width = "100%"; svg.style.height = "auto"; box.appendChild(svg);
+    let run = 0; const bars = st.map(s => { if (s.total){ run = s.value; return {s, lo: Math.min(0, s.value), hi: Math.max(0, s.value)}; } const a = run; run += s.value; return {s, lo: Math.min(a, run), hi: Math.max(a, run), from: a, to: run}; });
+    const sc = scale(Math.min(0, ...bars.map(b => b.lo)), Math.max(...bars.map(b => b.hi)), true);
+    const pw = w - M.l - M.r, ph = h - M.t - M.b, band = pw / st.length, Y = v => M.t + ph * (1 - (v - sc.lo) / (sc.hi - sc.lo));
+    const fmt = o.fmt || (v => num(v));
+    for (let i = 0; i <= sc.ticks; i++){ const v = sc.lo + (sc.hi - sc.lo) * i / sc.ticks;
+      svg.appendChild(el("line", {x1: M.l, x2: w - M.r, y1: Y(v), y2: Y(v), stroke: CSSV(Math.abs(v) < 1e-9 ? "--axis" : "--grid")}));
+      svg.appendChild(txt(num(v), {x: M.l - 8, y: Y(v) + 4, "text-anchor": "end", fill: CSSV("--ink-3"), "font-size": 11})); }
+    bars.forEach((b, i) => {
+      const x = M.l + band * i + band * .18, bw = band * .64, col = b.s.total ? CSSV("--s1") : CSSV(b.s.value >= 0 ? "--good" : "--bad");
+      svg.appendChild(el("rect", {x, y: Y(b.hi), width: bw, height: Math.max(1, Y(b.lo) - Y(b.hi)), rx: 5, fill: col, opacity: b.s.total ? 1 : .9}));
+      if (i < bars.length - 1){ const yv = Y(b.s.total ? b.s.value : b.to); svg.appendChild(el("line", {x1: x + bw, x2: x + band, y1: yv, y2: yv, stroke: CSSV("--ink-3"), "stroke-dasharray": "3 3"})); }
+      const lab = b.s.total ? fmt(b.s.value) : (b.s.value > 0 ? "+" : "") + fmt(b.s.value);
+      svg.appendChild(txt(lab, {x: x + bw / 2, y: Y(b.hi) - 6, "text-anchor": "middle", fill: CSSV("--ink"), "font-size": 11, "font-weight": 700}));
+      const words = String(b.s.name).split(" ");
+      words.slice(0, 2).forEach((wd, k) => svg.appendChild(txt(wd, {x: x + bw / 2, y: h - M.b + 16 + k * 14, "text-anchor": "middle", fill: CSSV("--ink-3"), "font-size": 11})));
+      const hit = el("rect", {x: M.l + band * i, y: M.t, width: band, height: ph, fill: "transparent"});
+      hit.addEventListener("mousemove", e => showTip(tipRows(b.s.name, [{name: b.s.total ? "금액" : "증감", color: col, value: lab}], b.s.note || ""), e));
+      hit.addEventListener("mouseleave", hideTip); svg.appendChild(hit);
+    });
+  }
+
   function spark(vals, color){
     const v = vals.filter(x => x != null);
     if (v.length < 2) return "";
@@ -202,5 +228,5 @@ const K = (() => {
 
   function onResize(fn){ let t; addEventListener("resize", () => { clearTimeout(t); t = setTimeout(fn, 120); }); addEventListener("dk-theme", fn); }
 
-  return {CSSV, store, num, pct, spct, spp, dir, esc, showTip, hideTip, tipRows, combo, spark, legend, seg, chips, copyTable, theme, onResize};
+  return {CSSV, store, num, pct, spct, spp, dir, esc, showTip, hideTip, tipRows, combo, waterfall, spark, legend, seg, chips, copyTable, theme, onResize};
 })();

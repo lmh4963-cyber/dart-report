@@ -1,8 +1,10 @@
 """거시지표 의사결정 대시보드 — 참고 양식(docs/DASHBOARD_STYLE.md) · dashkit 공통 CSS/JS.
-구성: 상단 · 국면 신호등(레일) · 슬라이서 · 지표별 추이 · 원가 민감도(추정) · 재고 커버리지(추정) · 요약 · 데이터 표 · 출처."""
+구성: 상단 · 국면 신호등(레일) · 슬라이서 · 지표별 추이 · 원가 민감도(추정) · 재고 커버리지(추정) · 공급사 인상 요구 검증 · 원가 전가 계산기 · 요약 · 데이터 표 · 출처."""
 from __future__ import annotations
 
 from dashkit import page
+
+EXTRA_CSS = ".tsel{font-size:13px;padding:5px 8px;border:1px solid var(--axis);border-radius:8px;background:var(--surface-2);color:var(--ink)}"
 
 BODY = r"""
 <header class="top"><div class="top-in">
@@ -43,6 +45,23 @@ BODY = r"""
       <div class="k-label">원자재 변동성</div><div class="k-val" id="vol" style="font-size:44px"></div>
       <div class="k-label" style="margin-top:18px">권장 커버리지<span class="est">추정</span></div><div class="k-val" id="wk" style="color:var(--accent)"></div>
       <div class="k-sub" id="wkn"></div><div class="chart" id="volC" style="margin-top:12px"></div></section>
+  </div>
+
+  <h2 class="sec">공급사 인상 요구 검증<small>공개 지수 변동 × 원자재 원가 비중 → 지수 근거 인상률과 요구 인상률 비교</small></h2>
+  <p class="seclead">근거 인상률<span class="est">추정</span> = 기간 중 지수 변화율 × 해당 원자재의 부품 원가 비중 · 환율 지표는 원화 환산 단가 변화로 간주 · 요구가 근거보다 크면 <b>근거 질의 대상</b> (판단 아닌 협상 자료)</p>
+  <section class="panel"><div class="p-head"><h3 class="p-title">인상 요구 목록</h3><div class="sright"><button class="tbtn" id="reqAdd" type="button">행 추가</button><button class="tbtn" id="reqCopy" type="button">표 복사</button></div></div>
+    <div class="p-sub">품목·지표·기간·요구율·비중 입력 · 브라우저 저장 · 지표는 이 대시보드의 월별 데이터 사용</div>
+    <div class="tbl-wrap"><table id="reqT"></table></div><div id="reqL" style="margin-top:12px"></div><div class="chart" id="reqC"></div></section>
+
+  <h2 class="sec">원가 전가 계산기<span class="est">추정</span><small>원자재 변동이 판가에 미치는 비중</small></h2>
+  <div class="grid">
+    <section class="panel"><div class="p-head"><h3 class="p-title">입력</h3><span class="p-unit">%</span></div>
+      <div class="p-sub">판가 영향 = 원자재 변동률 × 원가 중 원자재 비중 × 판가 중 원가 비중(원가율)</div>
+      <div class="tbl-wrap"><table id="ptT"></table></div></section>
+    <section class="panel"><div class="p-head"><h3 class="p-title">결과</h3><span class="p-unit">판가 대비</span></div><div class="p-sub" id="ptSub"></div>
+      <div class="k-label">원자재의 판가 내 비중</div><div class="k-val" id="ptShare"></div>
+      <div class="k-label" style="margin-top:16px">판가 영향 (원가 그대로 전가 시)</div><div class="k-val" id="ptImpact" style="color:var(--accent)"></div>
+      <div class="k-sub" id="ptNote"></div></section>
   </div>
 
   <h2 class="sec">요약<small>최근월 국면 사실 정리 · 판단·권유 아님</small></h2>
@@ -189,13 +208,68 @@ $("notes").innerHTML = IND.map(i => `${i.name}: ${(i.source || {}).stat || "-"} 
   .concat([`출처 ${D.source_label} · 기준일 ${D.generated}`, `원자재 외부 CSV: ${D.extra_label || "없음"}`, "국면 = 3개월 vs 12개월 이동평균 · 원가 영향·커버리지 = 사용자 입력 기반 추정 · 판단·권유 아님"])
   .map(t => `<li>${esc(t)}</li>`).join("");
 
-function renderAll(){ renderRail(); renderSlicer(); renderCharts(); renderSens(); renderCov(); renderReads(); renderTable(); }
+/* 공급사 인상 요구 검증 */
+const REQ_IND = IND.filter(i => i.kind !== "rate");
+const defReq = () => [{item: "예시 부품 A", key: (by.imp_raw ? "imp_raw" : REQ_IND[0].key), from: MON[MON.length - 4], to: MON[MON.length - 1], req: 7, share: 40}];
+let reqs = K.store.get("md_reqs", null) || defReq();
+let reqSel = 0;
+function reqCalc(r){
+  const i = by[r.key]; if (!i) return {};
+  const a = i.values[MON.indexOf(r.from)], b = i.values[MON.indexOf(r.to)];
+  const chg = a != null && b != null && a ? b / a - 1 : null;
+  const basis = chg == null ? null : chg * (r.share || 0) / 100;
+  const gap = basis == null ? null : (r.req || 0) / 100 - basis;
+  return {i, a, b, chg, basis, gap};
+}
+function renderReq(){
+  const mopt = cur => MON.map(m => `<option value="${m}" ${m === cur ? "selected" : ""}>${ym(m)}</option>`).join("");
+  const iopt = cur => REQ_IND.map(i => `<option value="${i.key}" ${i.key === cur ? "selected" : ""}>${esc(i.name)}</option>`).join("");
+  $("reqT").innerHTML = `<thead><tr><th class="lab">품목</th><th class="lab">기준 지표</th><th>기준월</th><th>비교월</th><th>지표 변화</th><th>원가 비중(%)</th><th>근거 인상률</th><th>요구 인상률(%)</th><th>차이</th><th></th></tr></thead><tbody>` +
+    reqs.map((r, k) => { const c = reqCalc(r), over = c.gap != null && c.gap > 0.0005;
+      return `<tr data-k="${k}" style="cursor:pointer"><td class="lab"><input type="text" data-f="item" value="${esc(r.item)}" style="width:120px;font-size:13px;padding:5px 8px;border:1px solid var(--axis);border-radius:8px;background:var(--surface-2);color:var(--ink)"></td>
+        <td class="lab"><select data-f="key" class="tsel">${iopt(r.key)}</select></td><td><select data-f="from" class="tsel">${mopt(r.from)}</select></td><td><select data-f="to" class="tsel">${mopt(r.to)}</select></td>
+        <td><span class="delta inv ${dir(c.chg)}">${spct(c.chg)}</span></td><td><input type="number" step="1" data-f="share" value="${r.share}"></td><td>${spct(c.basis)}</td>
+        <td><input type="number" step="0.1" data-f="req" value="${r.req}"></td><td class="${over ? "hl-key" : ""}">${c.gap == null ? "-" : spp(c.gap)}${over ? " · 질의" : ""}</td>
+        <td><button class="tbtn" data-del="${k}" type="button" style="padding:4px 10px">삭제</button></td></tr>`; }).join("") + "</tbody>";
+  const save = () => K.store.set("md_reqs", reqs);
+  $("reqT").querySelectorAll("tbody tr").forEach(tr => {
+    const k = +tr.dataset.k;
+    tr.onclick = e => { if (e.target.closest("input,select,button")) return; reqSel = k; drawReq(); };
+    tr.querySelectorAll("[data-f]").forEach(el => el.onchange = () => { const f = el.dataset.f; reqs[k][f] = ["share", "req"].includes(f) ? parseFloat(el.value) || 0 : el.value; save(); reqSel = k; renderReq(); });
+  });
+  $("reqT").querySelectorAll("[data-del]").forEach(b => b.onclick = () => { reqs.splice(+b.dataset.del, 1); if (!reqs.length) reqs = defReq(); reqSel = 0; save(); renderReq(); });
+  drawReq();
+}
+function drawReq(){
+  const r = reqs[Math.min(reqSel, reqs.length - 1)], c = reqCalc(r); if (!c.i){ $("reqC").innerHTML = ""; return; }
+  const k0 = Math.max(0, MON.indexOf(r.from) - 3), k1 = Math.min(MON.length - 1, MON.indexOf(r.to) + 3), ms = MON.slice(k0, k1 + 1);
+  const mark = ms.map(m => m === r.from || m === r.to ? c.i.values[MON.indexOf(m)] : null);
+  const ser = [{name: c.i.name, color: "--s3", type: "line", vals: ms.map(m => c.i.values[MON.indexOf(m)])}, {name: "기준월·비교월", color: "--s4", vals: mark, opacity: .35}];
+  $("reqL").innerHTML = `<div class="p-sub" style="margin:0 0 6px"><b>${esc(r.item)}</b> · ${esc(c.i.name)} ${ym(r.from)} ${valF(c.i)(c.a)} → ${ym(r.to)} ${valF(c.i)(c.b)} (${spct(c.chg)}) · 근거 인상률 ${spct(c.basis)} vs 요구 ${num(r.req, 1)}%</div>` + K.legend(ser);
+  K.combo($("reqC"), {cats: ms.map(m => m.slice(2, 4) + "." + m.slice(4)), series: ser, fmt: valF(c.i), zero: false, h: 200, slot: 10});
+}
+$("reqAdd").onclick = () => { reqs.push({...reqs[reqs.length - 1], item: `품목 ${reqs.length + 1}`}); K.store.set("md_reqs", reqs); renderReq(); };
+$("reqCopy").onclick = () => K.copyTable($("reqT"), $("reqCopy"));
+
+/* 원가 전가 계산기 */
+let pt = Object.assign({raw: 30, cost: 70, chg: 10}, K.store.get("md_pt", {}));
+function renderPt(){
+  $("ptT").innerHTML = `<tbody>${[["raw", "원가 중 원자재 비중(%)"], ["cost", "판가 중 원가 비중 = 원가율(%)"], ["chg", "원자재 가격 변동률(%)"]].map(([k, l]) => `<tr><td class="lab">${l}</td><td><input type="number" step="1" data-k="${k}" value="${pt[k]}"></td></tr>`).join("")}</tbody>`;
+  $("ptT").querySelectorAll("input").forEach(el => el.onchange = () => { pt[el.dataset.k] = parseFloat(el.value) || 0; K.store.set("md_pt", pt); renderPt(); });
+  const share = pt.raw / 100 * pt.cost / 100, imp = share * pt.chg / 100;
+  $("ptShare").innerHTML = `${num(share * 100, 1)}<span class="k-unit">%</span>`;
+  $("ptImpact").innerHTML = `${imp >= 0 ? "+" : ""}${num(imp * 100, 2)}<span class="k-unit">%</span>`;
+  $("ptSub").textContent = `원자재 ${num(pt.raw, 0)}% × 원가율 ${num(pt.cost, 0)}% = 판가의 ${num(share * 100, 1)}%`;
+  $("ptNote").textContent = `원자재 ${num(pt.chg, 0)}% 변동 → 판가 ${num(Math.abs(imp) * 100, 2)}% 상당 · 기본값(30%·70%·10%)은 검토 기록 예시 수치`;
+}
+
+function renderAll(){ renderRail(); renderSlicer(); renderCharts(); renderSens(); renderCov(); renderReq(); renderPt(); renderReads(); renderTable(); }
 renderAll();
-K.onResize(() => { renderCharts(); renderSens(); renderCov(); });
+K.onResize(() => { renderCharts(); renderSens(); renderCov(); drawReq(); });
 """
 
 
 def build_html(dash: dict, out_path: str, xlsx_name: str) -> None:
     data = {**dash, "xlsx_name": xlsx_name}
     with open(out_path, "w", encoding="utf-8") as fp:
-        fp.write(page(f"거시지표 대시보드 {dash['end'][:4]}.{dash['end'][4:]}", BODY, data, APP))
+        fp.write(page(f"거시지표 대시보드 {dash['end'][:4]}.{dash['end'][4:]}", BODY, data, APP, EXTRA_CSS))
