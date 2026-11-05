@@ -119,3 +119,21 @@ class DashSections(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CostExposure(unittest.TestCase):
+    def test_numbers(self):
+        from reviews.cost_exposure import DATA, build, derive
+
+        d = json.loads(DATA.read_text(encoding="utf-8"))
+        x = derive(d)
+        self.assertEqual(x["rev"][2], 173129220)  # 천원 = 사업보고서 매출실적 합계
+        self.assertAlmostEqual(x["rev"][2] * 1000, d["pl"]["revenue"], delta=1000)  # 재무제표 매출과 일치
+        self.assertAlmostEqual(x["export_share"][2], 86607016 / 173129220)
+        self.assertAlmostEqual(x["raw_to_cogs"], 64262e6 / 102290460903)
+        self.assertEqual(x["fx_net"], 2973 - 20820262)
+        self.assertEqual(d["fx"]["sens5"]["assets"] + d["fx"]["sens5"]["liabs"], d["fx"]["sens5"]["net"])
+        html = build(tempfile.mkdtemp()).read_text(encoding="utf-8")
+        for t in ("원가 전가 한계", "선구매 부등식", "20260323001116"):
+            self.assertIn(t, html)
+        assert_integer_sizes(self, html)

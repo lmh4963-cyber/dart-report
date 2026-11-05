@@ -110,7 +110,9 @@ python -m macro_dash --fixtures fixtures/ecos --end 202609     # 오프라인 �
 python -m margin_bridge 품목손익.csv --base 2025-H1 --comp 2026-H1 --out out/   # 열: 기간,품목,수량,매출액,매출원가[,원자재원가]
 python -m margin_bridge --sample --out out/                                     # 예시 템플릿
 python -m reviews.derivatives --out out/                                        # 파생상품 손익 이력 HTML
+python -m reviews.cost_exposure --out out/                                      # 원가·환율 노출 브리핑 HTML (FY2025)
 ```
 - 영업이익 귀속(공시 기준): 매출 효과 = 매출 증감 × 전기 매출총이익률 · 원가율 효과 = −원가율 변화 × 당기 매출 · 판관비 효과 · 기타(경상연구비 등) — 합계 = 영업이익 증감
 - 원가율 효과에는 원자재·환율·믹스가 섞여 있음 → 품목 단위 분해는 margin_bridge (사내 데이터 필요)
-- 검증: `python -m unittest -q tests.test_tools` (7건)
+- **원가·환율 노출 브리핑** (`reviews/cost_exposure.py` + `cost_exposure_jvm.json`): 제이브이엠 FY2025 사업보고서의 내수·수출 매출, 대표 원재료·판가 단가 추이, 원재료 매입, 외화 노출·환율 민감도에 검토 기록 1·6·7단계 공식(원가 전가 한계·선구매 부등식) 대입
+- 검증: `python -m unittest -q tests.test_tools` (8건)
