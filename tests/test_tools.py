@@ -137,3 +137,25 @@ class CostExposure(unittest.TestCase):
         for t in ("원가 전가 한계", "선구매 부등식", "20260323001116"):
             self.assertIn(t, html)
         assert_integer_sizes(self, html)
+
+
+class CommodityBoard(unittest.TestCase):
+    def test_parse_formats(self):
+        from commodity_board.build import parse
+
+        long = parse("월,품목,값,단위,통화\n2026-08,구리,100,USD/톤,USD\n2026-08,구리,110,USD/톤,USD\n2026-09,구리,120,USD/톤,USD\n")
+        self.assertEqual(long["구리"]["data"], {"202608": 105.0, "202609": 120.0})  # 같은 달 평균
+        self.assertEqual(long["구리"]["cur"], "USD")
+        wide = parse("﻿월,원/달러(원),수입물가(원재료)(2020=100)\n2026-09,1368.2,123.6\n")
+        self.assertIn("수입물가(원재료)", wide)
+        self.assertEqual(wide["수입물가(원재료)"]["unit"], "2020=100")
+        with self.assertRaises(ValueError):
+            parse("월,x\nabc,def\n")
+
+    def test_build(self):
+        from commodity_board.build import build
+
+        html = build(None, tempfile.mkdtemp()).read_text(encoding="utf-8")
+        for t in ("예시 데이터 (실제 시세 아님)", "CSV 불러오기", "원화 환산"):
+            self.assertIn(t, html)
+        assert_integer_sizes(self, html)

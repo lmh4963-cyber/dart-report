@@ -111,8 +111,15 @@ python -m margin_bridge 품목손익.csv --base 2025-H1 --comp 2026-H1 --out out
 python -m margin_bridge --sample --out out/                                     # 예시 템플릿
 python -m reviews.derivatives --out out/                                        # 파생상품 손익 이력 HTML
 python -m reviews.cost_exposure --out out/                                      # 원가·환율 노출 브리핑 HTML (FY2025)
+python -m commodity_board 시세.csv --out out/                                    # 원자재 가격 현황판 (생략 시 예시 데이터)
 ```
 - 영업이익 귀속(공시 기준): 매출 효과 = 매출 증감 × 전기 매출총이익률 · 원가율 효과 = −원가율 변화 × 당기 매출 · 판관비 효과 · 기타(경상연구비 등) — 합계 = 영업이익 증감
 - 원가율 효과에는 원자재·환율·믹스가 섞여 있음 → 품목 단위 분해는 margin_bridge (사내 데이터 필요)
 - **원가·환율 노출 브리핑** (`reviews/cost_exposure.py` + `cost_exposure_jvm.json`): 제이브이엠 FY2025 사업보고서의 내수·수출 매출, 대표 원재료·판가 단가 추이, 원재료 매입, 외화 노출·환율 민감도에 검토 기록 1·6·7단계 공식(원가 전가 한계·선구매 부등식) 대입
 - 검증: `python -m unittest -q tests.test_tools` (8건)
+
+## commodity_board — 원자재 가격 현황판
+- CSV 1개 → HTML 한 파일: 품목 카드(최신·전월·전년·국면·변동성) · 지수 비교 · 품목별 추이(12M 이동평균) · 변동 요약 · 데이터 표
+- 표시: 원 단위 / 지수(첫 달=100) / 원화 환산(USD 품목 × 같은 달 원/달러)
+- **HTML에서 CSV 끌어다 놓기로 실데이터 교체** (브라우저에만 저장) · 형식: `월,품목,값[,단위,통화]` 또는 `월,품목1(단위),…` (macro_dash CSV 호환)
+- 기본 내장 `commodity_board/sample.csv`는 **예시값** — 이 개발 환경에서 외부 시세 사이트 접근 불가
