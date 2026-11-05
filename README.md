@@ -123,3 +123,8 @@ python -m commodity_board 시세.csv --out out/                                 
 - 표시: 원 단위 / 지수(첫 달=100) / 원화 환산(USD 품목 × 같은 달 원/달러)
 - **HTML에서 CSV 끌어다 놓기로 실데이터 교체** (브라우저에만 저장) · 형식: `월,품목,값[,단위,통화]` 또는 `월,품목1(단위),…` (macro_dash CSV 호환)
 - 기본 내장 `commodity_board/sample.csv`는 **예시값** — 이 개발 환경에서 외부 시세 사이트 접근 불가
+
+## live_board — 원자재·환율 실시간 현황판 (claude.ai 아티팩트)
+- `python -m live_board.build out/` → 아티팩트 HTML 조각 생성, Artifact 게시 시 capabilities = `live_board.build.MANIFEST` (Alpha Vantage MCP Server: COPPER·ALUMINUM·WTI·BRENT·CURRENCY_EXCHANGE_RATE)
+- 보는 사람의 Alpha Vantage 커넥터로 조회, watchTool 자동 갱신 (원자재 12시간 캐시·6시간 주기, 환율 30분 캐시·2시간 주기) — 무료 키 한도 초당 1회·하루 25회
+- 한국 주식(한미약품 128940·한미사이언스 008930·제이브이엠 054950): Alpha Vantage에서 KRX 조회 안 됨(2026-11-05 확인) → 미지원 표시
